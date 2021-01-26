@@ -17,8 +17,8 @@ pipeline {
             steps {
                 sh '''
                     cp /services/04_lightshield_proxy/secrets.env .
-                    sudo docker-compose build
-                    SERVER=EUW1 sudo docker-compose -p lightshield_proxy_euw1 up -d
+                    sudo docker-compose -p lightshield_euw1 build
+                    SERVER=EUW1 sudo docker-compose -p lightshield_euw1 up -d
                    '''
             }
         }
