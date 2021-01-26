@@ -5,22 +5,15 @@ Routes and ratelimits all calls to the API.
 """
 import asyncio  # noqa: F401
 from aiohttp import web
-from aiohttp.web import HTTPInternalServerError
 import aiohttp
 import sys
 import os
 
 sys.path.append(os.getcwd())
 
-from datetime import timezone, datetime, timedelta
-import pytz
-import json
-import logging
-# Middleware
 from auth import Headers
 from rate_limiting.app_limiter import AppLimiter
 from rate_limiting.method_limiter import MethodLimiter
-import settings
 
 MIDDLEWARES = [
     AppLimiter,
