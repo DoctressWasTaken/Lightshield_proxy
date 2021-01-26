@@ -17,7 +17,6 @@ pipeline {
             steps {
             sh '''
                 cp /services/04_lightshield_proxy/secrets.env .
-                sudo docker network create lightshield
                 '''
                 }
         }
