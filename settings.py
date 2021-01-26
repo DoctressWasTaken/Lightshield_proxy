@@ -51,5 +51,5 @@ CONFIG = JsonConfig.read()
 
 API_KEY = CONFIG.get("API_KEY", None)
 
-SERVER = CONFIG.get("SERVER", "EUW1")
+SERVER = CONFIG.get("SERVER", "")
 
