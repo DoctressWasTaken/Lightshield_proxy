@@ -8,6 +8,8 @@ COPY requirements.txt .
 RUN  pip install -r requirements.txt
 
 COPY *.py ./
+COPY server server
+COPY rate_limiting rate_limiting
 
 
 CMD gunicorn run:start_gunicorn --worker-class aiohttp.worker.GunicornWebWorker --bind 0.0.0.0:8000

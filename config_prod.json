@@ -1,0 +1,11 @@
+{
+  "API_KEY": "RGAPI-c9316b53-c234-4bd0-80e9-d8d35990a7d5",
+  "APP_SECRET": "19737df22f1e93463a1f0f594336f131",
+  "SECRET_KEY": "=^2QZU/&o^ro>XpagF^?$n#VM'P|Nw@vB{nY6ZVQ]lLnxUQZt",
+  "DB_ENGINE": "django.db.backends.postgresql",
+  "DB_NAME": "data",
+  "DB_USER": "db_worker",
+  "DB_HOST": "db",
+  "DB_PORT": 5432,
+  "DEBUG": false
+}
