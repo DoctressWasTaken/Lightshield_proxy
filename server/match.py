@@ -11,10 +11,30 @@ logger.addHandler(handler)
 
 
 async def match_v4_matches(self, request):
-    target = request.rel_url
-    https = target.replace('http://', 'https://')
+    """Query handler for the endpoints under the method /lol/match/v4/matches."""
+    https = request.rel_url.replace('http://', 'https://')
     async with self.session.get(https, headers={key: dict(request.headers)[key] for key in dict(request.headers) if
                                                 key in self.required_header}) as response:
         resp = await response.text()
-        logger.info("Query to %s", target)
+        logger.info("Query to %s", request.rel_url)
+        return response
+
+
+async def match_v4_matchlists(self, request):
+    """Query handler for the endpoints under the method /lol/match/v4/matchlists."""
+    https = request.rel_url.replace('http://', 'https://')
+    async with self.session.get(https, headers={key: dict(request.headers)[key] for key in dict(request.headers) if
+                                                key in self.required_header}) as response:
+        resp = await response.text()
+        logger.info("Query to %s", request.rel_url)
+        return response
+
+
+async def match_v4_timelines(self, request):
+    """Query handler for the endpoints under the method /lol/match/v4/timelines."""
+    https = request.rel_url.replace('http://', 'https://')
+    async with self.session.get(https, headers={key: dict(request.headers)[key] for key in dict(request.headers) if
+                                                key in self.required_header}) as response:
+        resp = await response.text()
+        logger.info("Query to %s", request.rel_url)
         return response

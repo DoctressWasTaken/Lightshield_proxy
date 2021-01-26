@@ -11,7 +11,7 @@ handler.setFormatter(
 logger.addHandler(handler)
 
 
-async def summoner_v4_summoners_by_name(self, request):
+async def summoner_v4_summoners(self, request):
     target = request.rel_url
     async with self.session.get(target, headers=dict(request.headers)) as response:
         logger.info("Query to %s", target)
