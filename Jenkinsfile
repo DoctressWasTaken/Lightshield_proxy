@@ -17,28 +17,27 @@ pipeline {
             steps {
             sh '''
                 cp /services/04_lightshield_proxy/secrets.env .
-                sudo docker-compose build
                 '''
                 }
         }
         stage('Deploy EUW') {
             steps {
                 sh '''
-                    SERVER=EUW1 COMPOSE_PROJECT_NAME=lightshield_euw1 sudo docker-compose up -d
+                    SERVER=EUW1 COMPOSE_PROJECT_NAME=lightshield_euw1 sudo docker-compose up --build -d
                    '''
             }
         }
         stage('Deploy NA') {
             steps {
                 sh '''
-                    SERVER=NA1 COMPOSE_PROJECT_NAME=lightshield_na1 sudo docker-compose up -d
+                    SERVER=NA1 COMPOSE_PROJECT_NAME=lightshield_na1 sudo docker-compose up --build -d
                    '''
             }
         }
         stage('Deploy KR') {
             steps {
                 sh '''
-                    SERVER=KR1 COMPOSE_PROJECT_NAME=lightshield_kr sudo docker-compose up -d
+                    SERVER=KR COMPOSE_PROJECT_NAME=lightshield_kr sudo docker-compose up --build -d
                    '''
             }
         }
