@@ -13,12 +13,32 @@ pipeline {
                 echo 'Testing..Empty'
             }
         }
-        stage('Deploy') {
+        stage('Env Setup') {
+            steps {
+            sh '''
+                cp /services/04_lightshield_proxy/secrets.env .
+                sudo docker-compose build
+                '''
+                }
+        }
+        stage('Deploy EUW') {
             steps {
                 sh '''
-                    cp /services/04_lightshield_proxy/secrets.env .
-                    sudo docker-compose -p lightshield_euw1 build
-                    SERVER=EUW1 sudo docker-compose -p lightshield_euw1 up -d
+                    SERVER=EUW1 COMPOSE_PROJECT_NAME=lightshield_euw1 sudo docker-compose up -d
+                   '''
+            }
+        }
+        stage('Deploy NA') {
+            steps {
+                sh '''
+                    SERVER=NA1 COMPOSE_PROJECT_NAME=lightshield_na1 sudo docker-compose up -d
+                   '''
+            }
+        }
+        stage('Deploy KR') {
+            steps {
+                sh '''
+                    SERVER=KR1 COMPOSE_PROJECT_NAME=lightshield_kr sudo docker-compose up -d
                    '''
             }
         }
