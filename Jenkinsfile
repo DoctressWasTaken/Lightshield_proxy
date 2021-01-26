@@ -23,21 +23,22 @@ pipeline {
         stage('Deploy EUW') {
             steps {
                 sh '''
-                    SERVER=EUW1 COMPOSE_PROJECT_NAME=lightshield_euw1 sudo docker-compose up --build -d
+                    sudo SERVER=EUW1 COMPOSE_PROJECT_NAME=lightshield_euw1 docker-compose build
+                    sudo SERVER=EUW1 COMPOSE_PROJECT_NAME=lightshield_euw1 docker-compose up -d
                    '''
             }
         }
         stage('Deploy NA') {
             steps {
                 sh '''
-                    SERVER=NA1 COMPOSE_PROJECT_NAME=lightshield_na1 sudo docker-compose up --build -d
+                    sudo SERVER=NA1 COMPOSE_PROJECT_NAME=lightshield_na1 docker-compose up --build -d
                    '''
             }
         }
         stage('Deploy KR') {
             steps {
                 sh '''
-                    SERVER=KR COMPOSE_PROJECT_NAME=lightshield_kr sudo docker-compose up --build -d
+                    sudo SERVER=KR COMPOSE_PROJECT_NAME=lightshield_kr docker-compose up --build -d
                    '''
             }
         }
