@@ -49,7 +49,7 @@ class MethodLimiter:
                 await self.limits[method][span].update(
                     response.headers['Date'],
                     response.headers['X-App-Rate-Limit-Count'])
-        except:
-            logger.error("Failed to apply response data to query.")
+        except Exception as err:
+            logger.error("Failed to apply response data to query. [Code: %s]", err)
             raise HTTPException
         return response
