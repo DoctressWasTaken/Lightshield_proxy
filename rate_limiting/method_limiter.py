@@ -42,10 +42,11 @@ class MethodLimiter:
 
         response = await handler(request)
         try:
+            logger.info(response.headers['X-Method-Rate-Limit'])
             for limit in response.headers['X-Method-Rate-Limit'].split(","):
-                print(limit)
+                logger.info(limit)
                 max_, span = [int(i) for i in limit.split(":")]
-                print(max_, span)
+                logger.info(max_, span)
                 if str(span) not in self.limits[method]:
                     self.limits[method][str(span)] = LimitHandler(span=span, max_=max_)
                 await self.limits[method][str(span)].update(
