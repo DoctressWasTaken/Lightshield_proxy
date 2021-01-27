@@ -73,16 +73,17 @@ class LimitHandler:
         date = local_dt.astimezone(pytz.utc)
         logger.info("2222")
         if count <= 5 and date > self.bucket_start:
-
+            logger.info("3333")
             if date < self.bucket_reset_ready:
+                logger.info("4444")
                 if not self.bucket_verifier or self.bucket_verifier < count:
-                    print(f"Corrected bucket by {(date - self.bucket_start).total_seconds()}.")
+                    logger.info("Corrected bucket by %s.", (date - self.bucket_start).total_seconds())
                     self.bucket_start = date
                     self.bucket_end = self.bucket_start + timedelta(seconds=self.span)  # No extra time cause verified
                     self.bucket_reset_ready = self.bucket_start + timedelta(seconds=self.span * 0.8)
                     self.bucket_verifier = count
             else:
-                print(f"Initiated new bucket at {date}.")
+                logger.info("Initiated new bucket at %s.", date)
                 self.bucket_start = date
                 self.bucket_end = self.bucket_start + timedelta(
                     seconds=self.span)  # No extra time cause verified
@@ -90,5 +91,6 @@ class LimitHandler:
                 self.bucket_verifier = count
                 self.count = count
         elif count > 5 and date > self.bucket_start:
+            logger.info("6666")
             if count > self.count:
                 self.count = count
