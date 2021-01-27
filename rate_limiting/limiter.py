@@ -61,10 +61,12 @@ class LimitHandler:
 
     async def update(self, date, limits):
         """Called with headers after the request."""
+        logger.info("limits: %s", limits)
+        logger.info("span: %s", self.span)
         for limit in limits.split(","):
             if int(limit.split(":")[1]) == self.span:
                 count = int(limit.split(":")[0])
-        logger.info("Found limit")
+                logger.info("Found limit")
         naive = datetime.strptime(
             date,
             '%a, %d %b %Y %H:%M:%S GMT')
