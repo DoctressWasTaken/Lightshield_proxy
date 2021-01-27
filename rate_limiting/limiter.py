@@ -2,6 +2,14 @@ from datetime import datetime, timezone, timedelta
 import pytz
 import logging
 
+logger = logging.getLogger("Limiter-V4")
+logger.setLevel(logging.INFO)
+handler = logging.StreamHandler()
+handler.setLevel(logging.INFO)
+handler.setFormatter(
+    logging.Formatter('%(asctime)s [Limiter-V4] %(message)s'))
+logger.addHandler(handler)
+
 class LimitBlocked(Exception):
 
     def __init__(self, retry_after):
@@ -53,14 +61,17 @@ class LimitHandler:
 
     async def update(self, date, limits):
         """Called with headers after the request."""
-        count = [int(limit.split(":")[0]) for limit in limits.split(",") if limit.endswith(str(self.span))][0]
+        for limit in limits.split(","):
+            if int(limit.split(":")[1]) == self.span:
+                count = int(limit.split(":")[0])
+        logger.info("Found limit")
         naive = datetime.strptime(
             date,
             '%a, %d %b %Y %H:%M:%S GMT')
         local = pytz.timezone('GMT')
         local_dt = local.localize(naive, is_dst=None)
         date = local_dt.astimezone(pytz.utc)
-
+        logger.info("2222")
         if count <= 5 and date > self.bucket_start:
 
             if date < self.bucket_reset_ready:
@@ -78,7 +89,6 @@ class LimitHandler:
                 self.bucket_reset_ready = self.bucket_start + timedelta(seconds=self.span * 0.8)
                 self.bucket_verifier = count
                 self.count = count
-
         elif count > 5 and date > self.bucket_start:
             if count > self.count:
                 self.count = count
