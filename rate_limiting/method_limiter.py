@@ -49,7 +49,7 @@ class MethodLimiter:
                 logger.info(limit)
                 max_, span = limit.split(":")
                 max_ = int(max_)
-                logger.info(max_, span)
+                logger.info("%s, %s", max_, span)
                 if span not in self.limits[method]:
                     self.limits[method][span] = LimitHandler(span=int(span), max_=max_)
                 await self.limits[method][span].update(
