@@ -3,6 +3,7 @@ from rate_limiting.limiter import LimitBlocked, LimitHandler
 import logging
 
 logger = logging.getLogger("MethodLimiter-V4")
+logger.propagate = False
 logger.setLevel(logging.INFO)
 handler = logging.StreamHandler()
 handler.setLevel(logging.INFO)

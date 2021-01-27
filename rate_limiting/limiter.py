@@ -3,6 +3,7 @@ import pytz
 import logging
 
 logger = logging.getLogger("Limiter-V4")
+logger.propagate = False
 logger.setLevel(logging.INFO)
 handler = logging.StreamHandler()
 handler.setLevel(logging.INFO)
