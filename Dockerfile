@@ -12,5 +12,5 @@ COPY server server
 COPY rate_limiting rate_limiting
 
 
-CMD gunicorn run:start_gunicorn --worker-class aiohttp.worker.GunicornWebWorker --bind 0.0.0.0:8000
+CMD gunicorn run:start_gunicorn --worker-class aiohttp.worker.GunicornWebWorker --log-level critical --bind 0.0.0.0:8000
 #CMD ["python", "-u", "run.py"]
