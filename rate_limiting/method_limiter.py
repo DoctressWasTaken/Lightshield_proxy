@@ -1,6 +1,14 @@
 from aiohttp.web import middleware, HTTPException
 from rate_limiting.limiter import LimitBlocked, LimitHandler
+import logging
 
+logger = logging.getLogger("MethodLimiter-V4")
+logger.setLevel(logging.INFO)
+handler = logging.StreamHandler()
+handler.setLevel(logging.INFO)
+handler.setFormatter(
+    logging.Formatter('%(asctime)s [MethodLimiter-V4] %(message)s'))
+logger.addHandler(handler)
 
 class HTTPTooManyRequestsLocal(HTTPException):
     """Local 429 Exception. Separated from the server side exception for logging purposes."""
@@ -27,6 +35,7 @@ class MethodLimiter:
             for limit in self.limits[method].values():
                 limit.add
         except LimitBlocked as err:
+            logger.error("Limit reached")
             raise HTTPTooManyRequestsLocal(headers={"Retry-After": str(err.retry_after)})
         except KeyError:
             self.limits[method] = {}
@@ -41,5 +50,6 @@ class MethodLimiter:
                     response.headers['Date'],
                     response.headers['X-App-Rate-Limit-Count'])
         except:
+            logger.error("Failed to apply response data to query.")
             raise HTTPException
         return response

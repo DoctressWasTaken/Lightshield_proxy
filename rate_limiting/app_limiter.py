@@ -1,5 +1,14 @@
 from aiohttp.web import middleware, HTTPException
 from rate_limiting.limiter import LimitBlocked, LimitHandler
+import logging
+
+logger = logging.getLogger("AppLimiter-V4")
+logger.setLevel(logging.INFO)
+handler = logging.StreamHandler()
+handler.setLevel(logging.INFO)
+handler.setFormatter(
+    logging.Formatter('%(asctime)s [AppLimiter-V4] %(message)s'))
+logger.addHandler(handler)
 
 
 class HTTPTooManyRequestsLocal(HTTPException):
@@ -26,6 +35,7 @@ class AppLimiter:
             try:
                 limit.add
             except LimitBlocked as err:
+                logger.error("Limit reached")
                 raise HTTPTooManyRequestsLocal(headers={"Retry-After": str(err.retry_after)})
 
         response = await handler(request)
@@ -38,6 +48,6 @@ class AppLimiter:
                     response.headers['Date'],
                     response.headers['X-App-Rate-Limit-Count'])
         except Exception as err:
-            print(err)
+            logger.error("Failed to apply response data to query.")
             raise HTTPException
         return response
