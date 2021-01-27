@@ -64,7 +64,6 @@ class LimitHandler:
         for limit in limits.split(","):
             if int(limit.split(":")[1]) == self.span:
                 count = int(limit.split(":")[0])
-                logger.info("Found limit")
         naive = datetime.strptime(
             date,
             '%a, %d %b %Y %H:%M:%S GMT')
