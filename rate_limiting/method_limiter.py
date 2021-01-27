@@ -55,7 +55,7 @@ class MethodLimiter:
                 logger.info("Added: %s, %s", max_, span)
                 await self.limits[method][span].update(
                     response.headers['Date'],
-                    response.headers['X-App-Rate-Limit-Count'])
+                    response.headers['X-Method-Rate-Limit-Count'])
                 logger.info("Updated: %s, %s", max_, span)
         except Exception as err:
             logger.error("Failed to apply response data to query. [Code: %s]", err)
