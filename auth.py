@@ -40,6 +40,6 @@ class ServerCheck:
         request: Check if correct server
         response: No changes.
         """
-        if self.required_name not in request.rel_url.split("/")[2]:
+        if self.required_name not in request.rel_url.__str__().split("/")[2]:
             raise HTTPException
         return await handler(request)
