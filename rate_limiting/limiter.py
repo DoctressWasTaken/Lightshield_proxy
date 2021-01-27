@@ -61,8 +61,6 @@ class LimitHandler:
 
     async def update(self, date, limits):
         """Called with headers after the request."""
-        logger.info("limits: %s", limits)
-        logger.info("span: %s", self.span)
         for limit in limits.split(","):
             if int(limit.split(":")[1]) == self.span:
                 count = int(limit.split(":")[0])
@@ -73,11 +71,8 @@ class LimitHandler:
         local = pytz.timezone('GMT')
         local_dt = local.localize(naive, is_dst=None)
         date = local_dt.astimezone(pytz.utc)
-        logger.info("2222")
         if count <= 5 and date > self.bucket_start:
-            logger.info("3333")
             if date < self.bucket_reset_ready:
-                logger.info("4444")
                 if not self.bucket_verifier or self.bucket_verifier < count:
                     logger.info("Corrected bucket by %s.", (date - self.bucket_start).total_seconds())
                     self.bucket_start = date
@@ -93,6 +88,5 @@ class LimitHandler:
                 self.bucket_verifier = count
                 self.count = count
         elif count > 5 and date > self.bucket_start:
-            logger.info("6666")
             if count > self.count:
                 self.count = count

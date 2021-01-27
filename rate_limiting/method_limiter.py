@@ -44,19 +44,14 @@ class MethodLimiter:
 
         response = await handler(request)
         try:
-            logger.info(response.headers['X-Method-Rate-Limit'])
             for limit in response.headers['X-Method-Rate-Limit'].split(","):
-                logger.info(limit)
                 max_, span = limit.split(":")
                 max_ = int(max_)
-                logger.info("%s, %s", max_, span)
                 if span not in self.limits[method]:
                     self.limits[method][span] = LimitHandler(span=int(span), max_=max_)
-                logger.info("Added: %s, %s", max_, span)
                 await self.limits[method][span].update(
                     response.headers['Date'],
                     response.headers['X-Method-Rate-Limit-Count'])
-                logger.info("Updated: %s, %s", max_, span)
         except Exception as err:
             logger.error("Failed to apply response data to query. [Code: %s]", err)
             raise HTTPException
