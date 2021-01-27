@@ -10,9 +10,11 @@ handler.setFormatter(
     logging.Formatter('%(asctime)s [MethodLimiter-V4] %(message)s'))
 logger.addHandler(handler)
 
+
 class HTTPTooManyRequestsLocal(HTTPException):
     """Local 429 Exception. Separated from the server side exception for logging purposes."""
     status_code = 430
+
 
 class MethodLimiter:
     """Middleware that checks method wide limits."""
@@ -45,11 +47,12 @@ class MethodLimiter:
             logger.info(response.headers['X-Method-Rate-Limit'])
             for limit in response.headers['X-Method-Rate-Limit'].split(","):
                 logger.info(limit)
-                max_, span = [int(i) for i in limit.split(":")]
+                max_, span = limit.split(":")
+                max_ = int(max_)
                 logger.info(max_, span)
-                if str(span) not in self.limits[method]:
-                    self.limits[method][str(span)] = LimitHandler(span=span, max_=max_)
-                await self.limits[method][str(span)].update(
+                if span not in self.limits[method]:
+                    self.limits[method][span] = LimitHandler(span=int(span), max_=max_)
+                await self.limits[method][span].update(
                     response.headers['Date'],
                     response.headers['X-App-Rate-Limit-Count'])
         except Exception as err:
