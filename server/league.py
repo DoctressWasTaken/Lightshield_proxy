@@ -3,6 +3,7 @@ import logging
 import json
 
 logger = logging.getLogger("League-V4")
+logger.propagate = False
 logger.setLevel(logging.INFO)
 handler = logging.StreamHandler()
 handler.setLevel(logging.INFO)
