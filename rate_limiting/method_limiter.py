@@ -52,9 +52,11 @@ class MethodLimiter:
                 logger.info("%s, %s", max_, span)
                 if span not in self.limits[method]:
                     self.limits[method][span] = LimitHandler(span=int(span), max_=max_)
+                logger.info("Added: %s, %s", max_, span)
                 await self.limits[method][span].update(
                     response.headers['Date'],
                     response.headers['X-App-Rate-Limit-Count'])
+                logger.info("Updated: %s, %s", max_, span)
         except Exception as err:
             logger.error("Failed to apply response data to query. [Code: %s]", err)
             raise HTTPException
