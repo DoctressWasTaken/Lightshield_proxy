@@ -2,13 +2,13 @@ from aiohttp.web import middleware, HTTPException
 from rate_limiting.limiter import LimitBlocked, LimitHandler
 import logging
 
-logger = logging.getLogger("AppLimiter-V4")
+logger = logging.getLogger("AppLimiter")
 logger.propagate = False
 logger.setLevel(logging.INFO)
 handler = logging.StreamHandler()
 handler.setLevel(logging.INFO)
 handler.setFormatter(
-    logging.Formatter('%(asctime)s [AppLimiter-V4] %(message)s'))
+    logging.Formatter('%(asctime)s [AppLimiter] %(message)s'))
 logger.addHandler(handler)
 
 

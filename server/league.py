@@ -16,7 +16,7 @@ async def league_v4_entries(self, request):
     """Query handler for the endpoints under the method /lol/league/v4/entries."""
     target = request.rel_url
     async with self.session.get(target, headers=dict(request.headers)) as response:
-        logger.info("Query to %s", target)
+        logger.debug("Query to %s", target)
         returned_headers = {}
         for header in response.headers:
             if header in self.required_header:

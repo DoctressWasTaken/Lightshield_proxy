@@ -17,7 +17,7 @@ async def match_v4_matches(self, request):
     """Query handler for the endpoints under the method /lol/match/v4/matches."""
     target = request.rel_url
     async with self.session.get(target, headers=dict(request.headers)) as response:
-        logger.info("Query to %s", target)
+        logger.debug("Query to %s", target)
         returned_headers = {}
         for header in response.headers:
             if header in self.required_header:
@@ -31,7 +31,7 @@ async def match_v4_matchlists(self, request):
     """Query handler for the endpoints under the method /lol/match/v4/matchlists."""
     target = request.rel_url
     async with self.session.get(target, headers=dict(request.headers)) as response:
-        logger.info("Query to %s", target)
+        logger.debug("Query to %s", target)
         returned_headers = {}
         for header in response.headers:
             if header in self.required_header:
@@ -45,7 +45,7 @@ async def match_v4_timelines(self, request):
     """Query handler for the endpoints under the method /lol/match/v4/timelines."""
     target = request.rel_url
     async with self.session.get(target, headers=dict(request.headers)) as response:
-        logger.info("Query to %s", target)
+        logger.debug("Query to %s", target)
         returned_headers = {}
         for header in response.headers:
             if header in self.required_header:

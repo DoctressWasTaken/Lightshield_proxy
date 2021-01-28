@@ -2,13 +2,13 @@ from datetime import datetime, timezone, timedelta
 import pytz
 import logging
 
-logger = logging.getLogger("Limiter-V4")
+logger = logging.getLogger("Limiter")
 logger.propagate = False
 logger.setLevel(logging.INFO)
 handler = logging.StreamHandler()
 handler.setLevel(logging.INFO)
 handler.setFormatter(
-    logging.Formatter('%(asctime)s [Limiter-V4] %(message)s'))
+    logging.Formatter('%(asctime)s [Limiter] %(message)s'))
 logger.addHandler(handler)
 
 class LimitBlocked(Exception):

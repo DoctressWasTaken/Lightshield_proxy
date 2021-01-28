@@ -2,13 +2,13 @@ from aiohttp.web import middleware, HTTPException
 from rate_limiting.limiter import LimitBlocked, LimitHandler
 import logging
 
-logger = logging.getLogger("MethodLimiter-V4")
+logger = logging.getLogger("MethodLimiter")
 logger.propagate = False
 logger.setLevel(logging.INFO)
 handler = logging.StreamHandler()
 handler.setLevel(logging.INFO)
 handler.setFormatter(
-    logging.Formatter('%(asctime)s [MethodLimiter-V4] %(message)s'))
+    logging.Formatter('%(asctime)s [MethodLimiter] %(message)s'))
 logger.addHandler(handler)
 
 
@@ -31,9 +31,7 @@ class MethodLimiter:
         request: Add X-Riot-Token Header with the API Key.
         response: No changes.
         """
-        print(request.path)
         method = "-".join(request.path.split("/")[1:5])
-        print(method)
         try:
             for limit in self.limits[method].values():
                 limit.add
