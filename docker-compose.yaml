@@ -5,7 +5,7 @@ services:
     build:
       dockerfile: Dockerfile
       context: .
-    container_name: ${COMPOSE_PROJECT_NAME}_proxy
+    container_name: lightshield_proxy_${SERVER}
     environment:
       - SERVER=${SERVER}
     env_file:
