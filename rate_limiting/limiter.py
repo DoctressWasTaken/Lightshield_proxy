@@ -26,6 +26,7 @@ class LimitHandler:
         self.max = max(5, max_ - 5)  # Max Calls per bucket (Reduced by 1 for safety measures)
         self.count = 0  # Current Calls in this bucket
         self.bucket_start = datetime.now(timezone.utc)  # Cutoff after which no new requests are accepted
+        logger.info("[%s] Initiated new bucket at %s.", self.span, self.bucket_start)
         self.bucket_end = self.bucket_start + timedelta(seconds=self.span + 1.5)  # EXTRA time when initiated
         self.bucket_reset_ready = self.bucket_start + timedelta(seconds=(self.span + 1.5) * 0.8)
         self.bucket_verifier = None
@@ -74,13 +75,13 @@ class LimitHandler:
         if count <= 5 and date > self.bucket_start:
             if date < self.bucket_reset_ready:
                 if not self.bucket_verifier or self.bucket_verifier < count:
-                    logger.info("Corrected bucket by %s.", (date - self.bucket_start).total_seconds())
+                    logger.info("[%s] Corrected bucket by %s.", self.span, (date - self.bucket_start).total_seconds())
                     self.bucket_start = date
                     self.bucket_end = self.bucket_start + timedelta(seconds=self.span)  # No extra time cause verified
                     self.bucket_reset_ready = self.bucket_start + timedelta(seconds=self.span * 0.8)
                     self.bucket_verifier = count
             else:
-                logger.info("Initiated new bucket at %s.", date)
+                logger.info("[%s] Initiated new bucket at %s.", self.span, date)
                 self.bucket_start = date
                 self.bucket_end = self.bucket_start + timedelta(
                     seconds=self.span)  # No extra time cause verified
