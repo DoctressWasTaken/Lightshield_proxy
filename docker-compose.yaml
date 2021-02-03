@@ -12,8 +12,8 @@ services:
       - secrets.env
     restart: always
     volumes:
-        - ./logs/:/logs/
-        - ./configs/:/project/configs/
+      - /logs/lightshield_proxy/:/logs/
+      - ./configs/:/project/configs/
 
 
 networks:
