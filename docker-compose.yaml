@@ -12,7 +12,7 @@ services:
       - secrets.env
     restart: always
     volumes:
-        - ./logs/:/project/logs/
+        - ./logs/:/logs/
         - ./configs/:/project/configs/
 
 

@@ -1,6 +1,10 @@
-from datetime import datetime, timezone, timedelta
-import pytz
 import logging
+from datetime import datetime, timezone, timedelta
+from logging import handlers
+
+import pytz
+
+import settings
 
 logger = logging.getLogger("Limiter")
 logger.propagate = False
@@ -11,6 +15,13 @@ handler.setFormatter(
     logging.Formatter('%(asctime)s [Limiter] %(message)s'))
 logger.addHandler(handler)
 
+file_logger = logging.getLogger("log_writer")
+file_logger.addHandler(
+    handlers.TimedRotatingFileHandler('/logs/%s_bucket_usage' % settings.SERVER.lower(), when='h', interval=1,
+                                      backupCount=24)
+)
+
+
 class LimitBlocked(Exception):
 
     def __init__(self, retry_after):
@@ -19,7 +30,10 @@ class LimitBlocked(Exception):
 
 class LimitHandler:
 
-    def __init__(self, limits=None, span=None, max_=None):
+    def __init__(self, limits=None, span=None, max_=None, method='app'):
+
+        self.type = method
+
         if limits:
             max_, span = [int(i) for i in limits]
         self.span = int(span)  # Duration of the bucket
@@ -82,6 +96,7 @@ class LimitHandler:
                     self.bucket_verifier = count
             else:
                 logger.info("[%s] Initiated new bucket at %s.", self.span, date)
+                file_logger.info("%s,%s,%s,%s", self.type, self.span, self.max, self.count)
                 self.bucket_start = date
                 self.bucket_end = self.bucket_start + timedelta(
                     seconds=self.span)  # No extra time cause verified

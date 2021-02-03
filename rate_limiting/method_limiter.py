@@ -47,7 +47,7 @@ class MethodLimiter:
                 max_, span = limit.split(":")
                 max_ = int(max_)
                 if span not in self.limits[method]:
-                    self.limits[method][span] = LimitHandler(span=int(span), max_=max_)
+                    self.limits[method][span] = LimitHandler(span=int(span), max_=max_, method=method)
                 await self.limits[method][span].update(
                     response.headers['Date'],
                     response.headers['X-Method-Rate-Limit-Count'])
