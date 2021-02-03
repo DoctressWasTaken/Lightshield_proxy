@@ -16,8 +16,9 @@ handler.setFormatter(
 logger.addHandler(handler)
 
 file_logger = logging.getLogger("log_writer")
+file_logger.setLevel(logging.INFO)
 file_logger.addHandler(
-    handlers.TimedRotatingFileHandler('/logs/%s_bucket_usage' % settings.SERVER.lower(), when='h', interval=1,
+    handlers.TimedRotatingFileHandler('/logs/%s_bucket_usage_.log' % settings.SERVER.lower(), when='h', interval=1,
                                       backupCount=24)
 )
 
