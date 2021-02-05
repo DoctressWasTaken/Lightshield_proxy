@@ -64,7 +64,7 @@ class LimitHandler:
             self.bucket_start = datetime.now(timezone.utc)
             self.bucket_end = self.bucket_start + timedelta(seconds=self.span + 1.5)  # EXTRA time when initiated
             self.bucket_reset_ready = self.bucket_start + timedelta(seconds=(self.span + 1.5) * 0.8)
-
+            file_logger.info("%s,%s,%s,%s", self.type, self.span, self.max, self.count)
             self.count = 0
 
         if self.count < self.max:
