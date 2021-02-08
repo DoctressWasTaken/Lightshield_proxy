@@ -14,7 +14,15 @@ services:
     volumes:
       - /logs/lightshield_proxy/:/logs/
       - ./configs/:/project/configs/
-
+    networks:
+      default:
+        aliases:
+          - lightshield_proxy_${SERVER}
+    logging:
+      driver: "json-file"
+      options:
+       max-file: "5"
+       max-size: "10m"
 
 networks:
   default:
