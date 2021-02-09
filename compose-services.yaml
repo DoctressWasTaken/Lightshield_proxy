@@ -11,6 +11,10 @@ services:
       default:
         aliases:
           - lightshield_proxy
+    depends_on:
+      - proxy_euw1
+      - proxy_kr
+      - proxy_na1
 
   proxy_na1:
     build:
