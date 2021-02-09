@@ -20,28 +20,14 @@ pipeline {
                 '''
                 }
         }
-        stage('Deploy NA') {
+        stage('Deploy') {
             steps {
                 sh '''
-                    sudo SERVER=na1 COMPOSE_PROJECT_NAME=lightshield_proxy_na1 docker-compose build
-                    sudo SERVER=na1 COMPOSE_PROJECT_NAME=lightshield_proxy_na1 docker-compose up -d
+                    sudo docker-compose build
+                    sudo docker-compose up -d --remove-orphans
                    '''
             }
         }
-        stage('Deploy EUW') {
-            steps {
-                sh '''
-                    sudo SERVER=euw1 COMPOSE_PROJECT_NAME=lightshield_proxy_euw1 docker-compose build
-                    sudo SERVER=euw1 COMPOSE_PROJECT_NAME=lightshield_proxy_euw1 docker-compose up -d
-                   '''
-            }
-        }
-        stage('Deploy KR') {
-            steps {
-                sh '''
-                    sudo SERVER=kr COMPOSE_PROJECT_NAME=lightshield_proxy_kr docker-compose up --build -d
-                   '''
-            }
         }
     }
 }

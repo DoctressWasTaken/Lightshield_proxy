@@ -12,13 +12,14 @@ services:
         aliases:
           - lightshield_proxy
 
-  proxy:
+  proxy_na1:
     build:
       dockerfile: Dockerfile
       context: .
-    container_name: lightshield_proxy_${SERVER}
+    image: lightshield_proxy_na1
+    container_name: lightshield_proxy_na1
     environment:
-      - SERVER=${SERVER}
+      - SERVER=NA1
     env_file:
       - secrets.env
     restart: always
@@ -28,7 +29,50 @@ services:
     networks:
       default:
         aliases:
-          - lightshield_proxy_${SERVER}
+          - lightshield_proxy_na1
+    logging:
+      driver: "json-file"
+      options:
+       max-file: "5"
+       max-size: "10m"
+
+
+  proxy_euw1:
+    image: lightshield_proxy_na1
+    container_name: lightshield_proxy_euw1
+    environment:
+      - SERVER=EUW1
+    env_file:
+      - secrets.env
+    restart: always
+    volumes:
+      - /logs/lightshield_proxy/:/logs/
+      - ./configs/:/project/configs/
+    networks:
+      default:
+        aliases:
+          - lightshield_proxy_euw1
+    logging:
+      driver: "json-file"
+      options:
+       max-file: "5"
+       max-size: "10m"
+
+  proxy_kr:
+    image: lightshield_proxy_na1
+    container_name: lightshield_proxy_kr
+    environment:
+      - SERVER=KR
+    env_file:
+      - secrets.env
+    restart: always
+    volumes:
+      - /logs/lightshield_proxy/:/logs/
+      - ./configs/:/project/configs/
+    networks:
+      default:
+        aliases:
+          - lightshield_proxy_kr
     logging:
       driver: "json-file"
       options:
