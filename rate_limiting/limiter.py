@@ -1,6 +1,6 @@
 import asyncio
 import logging
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from logging import handlers
 
 import pytz
@@ -31,6 +31,7 @@ class LimitBlocked(Exception):
 
 
 class LimitHandler:
+
     bucket_active = False
     bucket_start = None
 
@@ -73,7 +74,7 @@ class LimitHandler:
         self.bucket_refreshable = True
 
     def sync_create_bucket(self):
-        self.bucket_start = datetime.now(tz=timezone.utc)
+        self.bucket_start = datetime.utcnow()
         self.bucket_killer = asyncio.get_event_loop().call_later(self.span + 1.5, self.close_bucket)
         self.bucket_reset_limiter = asyncio.get_event_loop().call_later((self.span + 1.5) * 0.8, self.allow_reset)
         self.bucket_refreshable = False
@@ -82,7 +83,7 @@ class LimitHandler:
         self.bucket_active = True
 
     async def create_bucket(self):
-        self.bucket_start = datetime.now(tz=timezone.utc)
+        self.bucket_start = datetime.utcnow()
         self.bucket_killer = asyncio.get_event_loop().call_later(self.span + 1.5, self.close_bucket)
         self.bucket_reset_limiter = asyncio.get_event_loop().call_later((self.span + 1.5) * 0.8, self.allow_reset)
         self.bucket_refreshable = False
@@ -97,7 +98,7 @@ class LimitHandler:
 
     def when_reset(self):
         """Return seconds until reset."""
-        return int((self.bucket_start - datetime.now(tz=timezone.utc) + timedelta(seconds=self.span)).total_seconds())
+        return int((self.bucket_start - datetime.utcnow() + timedelta(seconds=self.span)).total_seconds())
 
     async def update(self, date, limits):
         """Called with headers after the request."""
