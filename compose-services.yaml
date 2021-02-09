@@ -20,7 +20,7 @@ services:
     build:
       dockerfile: Dockerfile
       context: .
-    image: lightshield_proxy_na1
+    image: lightshield_proxy
     container_name: lightshield_proxy_na1
     environment:
       - SERVER=NA1
@@ -42,7 +42,7 @@ services:
 
 
   proxy_euw1:
-    image: lightshield_proxy_na1
+    image: lightshield_proxy
     container_name: lightshield_proxy_euw1
     environment:
       - SERVER=EUW1
@@ -63,7 +63,7 @@ services:
        max-size: "10m"
 
   proxy_kr:
-    image: lightshield_proxy_na1
+    image: lightshield_proxy
     container_name: lightshield_proxy_kr
     environment:
       - SERVER=KR
