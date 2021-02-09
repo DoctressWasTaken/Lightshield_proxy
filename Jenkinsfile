@@ -20,14 +20,6 @@ pipeline {
                 '''
                 }
         }
-        stage('Deploy NA') {
-            steps {
-                sh '''
-                    sudo SERVER=na1 COMPOSE_PROJECT_NAME=lightshield_proxy_na1 docker-compose build
-                    sudo SERVER=na1 COMPOSE_PROJECT_NAME=lightshield_proxy_na1 docker-compose up -d
-                   '''
-            }
-        }
         stage('Deploy EUW') {
             steps {
                 sh '''

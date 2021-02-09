@@ -40,6 +40,10 @@ class AppLimiter:
                 raise HTTPTooManyRequestsLocal(headers={"Retry-After": str(err.retry_after)})
 
         response = await handler(request)
+        if response.status == 429 and 'X-App-Rate-Limit' in response.headers:
+            logger.warning("Received 429 with rate limits.")
+        elif response.status == 429:
+            logger.warning("Received 429 without rate limits.")
         try:
             for limit in response.headers['X-App-Rate-Limit'].split(","):
                 max_, span = [int(i) for i in limit.split(":")]
