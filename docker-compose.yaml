@@ -2,16 +2,6 @@ version: '3.7'
 services:
 
 
-  proxy_handler:
-    hostname: nginx
-    image: nginx
-    ports:
-      - 80:80
-      - 443:443
-    volumes:
-      - <path/to/your/config>:/etc/nginx
-      - <path/to/your/certs>:/etc/ssl/private
-
   proxy:
     build:
       dockerfile: Dockerfile
