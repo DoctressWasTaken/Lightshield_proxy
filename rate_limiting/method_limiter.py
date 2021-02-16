@@ -36,7 +36,6 @@ class MethodLimiter:
             for limit in self.limits[method].values():
                 limit.add
         except LimitBlocked as err:
-            logger.error("Limit reached")
             raise HTTPTooManyRequestsLocal(headers={"Retry-After": str(err.retry_after)})
         except KeyError:
             self.limits[method] = {}
