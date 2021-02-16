@@ -36,7 +36,6 @@ class AppLimiter:
             try:
                 limit.add
             except LimitBlocked as err:
-                logger.error("Limit reached")
                 raise HTTPTooManyRequestsLocal(headers={"Retry-After": str(err.retry_after)})
 
         response = await handler(request)
