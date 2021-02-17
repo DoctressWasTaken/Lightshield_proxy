@@ -35,6 +35,8 @@ class LimitHandler:
     blocked = False
     verified = False
     reset_ready = False
+    bucket_start = None
+    bucket_end = None
 
     def __init__(self, limits=None, span=None, max_=None, method='app'):
 
@@ -59,8 +61,10 @@ class LimitHandler:
 
         The bucket is unverified by default but can be started verified if its initialized by a delayed request.
         """
-        self.bucket_task_crack.cancel()
-        self.bucket_task_reset.cancel()
+        if self.bucket_task_reset:
+            self.bucket_task_reset.cancel()
+        if self.bucket_task_crack:
+            self.bucket_task_crack.cancel()
         duration = self.span
         if not pre_verified:
             duration *= 1.2
@@ -122,7 +126,6 @@ class LimitHandler:
         if self.count >= self.max:
             self.blocked = True
             self.bucket = False
-
 
     async def update(self, date, limits):
         """Called with headers after the request."""
