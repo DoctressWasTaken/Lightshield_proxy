@@ -86,7 +86,7 @@ class LimitHandler:
         self.count = 0
         logger.info("[%s] Initiated new bucket at %s.", self.span, self.bucket_start)
 
-    async def crack_bucket(self):
+    def crack_bucket(self):
         """Allow the bucket to be reset from this point forward.
 
         Buckets can be reset early starting 80% of its lifetime along the way.
@@ -108,7 +108,7 @@ class LimitHandler:
             (self.bucket_end - datetime.now(timezone.utc)).total_seconds(), self.destroy_bucket)
         logger.info("[%s] Verified bucket.", self.span)
 
-    async def destroy_bucket(self):
+    def destroy_bucket(self):
         """Mark the bucket as destroyed.
         """
         self.bucket = False
