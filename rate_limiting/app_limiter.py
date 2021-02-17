@@ -49,7 +49,7 @@ class AppLimiter:
             for limit in response.headers['X-App-Rate-Limit'].split(","):
                 max_, span = [int(i) for i in limit.split(":")]
                 if str(span) not in self.limits:
-                    self.limits[str(span)] = LimitHandler(span=span, max_=max_)
+                    self.limits[str(span)] = LimitHandler(span=span, max_=max_, logging=logger)
                 await self.limits[str(span)].update(
                     response.headers['Date'],
                     response.headers['X-App-Rate-Limit-Count'])

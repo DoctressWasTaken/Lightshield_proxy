@@ -1,7 +1,10 @@
-from aiohttp.web import middleware, HTTPException
-from rate_limiting.limiter import LimitBlocked, LimitHandler
 import logging
 import traceback
+
+from aiohttp.web import middleware, HTTPException
+
+from rate_limiting.limiter import LimitBlocked, LimitHandler
+
 logger = logging.getLogger("MethodLimiter")
 logger.propagate = False
 logger.setLevel(logging.INFO)
@@ -46,7 +49,7 @@ class MethodLimiter:
                 max_, span = limit.split(":")
                 max_ = int(max_)
                 if span not in self.limits[method]:
-                    self.limits[method][span] = LimitHandler(span=int(span), max_=max_, method=method)
+                    self.limits[method][span] = LimitHandler(span=int(span), max_=max_, method=method, logging=logger)
                 await self.limits[method][span].update(
                     response.headers['Date'],
                     response.headers['X-Method-Rate-Limit-Count'])
