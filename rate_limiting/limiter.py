@@ -44,13 +44,6 @@ class LimitHandler:
             max_, span = [int(i) for i in limits]
         self.span = int(span)  # Duration of the bucket
         self.max = max(5, max_ - 5)  # Max Calls per bucket (Reduced by 1 for safety measures)
-        self.count = 0  # Current Calls in this bucket
-        self.bucket_start = datetime.now(timezone.utc)  # Cutoff after which no new requests are accepted
-        logger.info("[%s] Initiated new bucket at %s.", self.span, self.bucket_start)
-        self.bucket_end = self.bucket_start + timedelta(seconds=self.span + 1.5)  # EXTRA time when initiated
-        self.bucket_reset_ready = self.bucket_start + timedelta(seconds=(self.span + 1.5) * 0.8)
-        self.bucket_verifier = None
-
         logging.info(f"Initiated {self.max}:{self.span}.")
 
     def __repr__(self):
@@ -81,6 +74,7 @@ class LimitHandler:
         self.bucket_task_reset = asyncio.get_event_loop().call_later(duration, self.destroy_bucket)
         self.bucket_task_crack = asyncio.get_event_loop().call_later(duration * 0.8, self.crack_bucket)
         self.count = 0
+        logger.info("[%s] Initiated new bucket at %s.", self.span, self.bucket_start)
 
     async def crack_bucket(self):
         """Allow the bucket to be reset from this point forward.
@@ -88,6 +82,7 @@ class LimitHandler:
         Buckets can be reset early starting 80% of its lifetime along the way.
         """
         self.reset_ready = True
+        logger.info("[%s] Cracked bucket.", self.span)
 
     async def verify_bucket(self, verified_start, verified_count):
         """Verify an existing buckets starting point.
@@ -99,6 +94,7 @@ class LimitHandler:
         self.bucket_end = self.bucket_start + timedelta(seconds=self.span)
         self.bucket_task_reset.cancel()
         self.bucket_task_reset = asyncio.get_event_loop().call_at(self.bucket_end.timestamp(), self.destroy_bucket)
+        logger.info("[%s] Verified bucket.", self.span)
 
     async def destroy_bucket(self):
         """Mark the bucket as destroyed.
@@ -106,6 +102,7 @@ class LimitHandler:
         self.bucket = False
         self.blocked = False
         file_logger.info("%s,%s,%s,%s", self.type, self.span, self.max, self.count)
+        logger.info("[%s] Destroyed bucket.", self.span)
 
     async def add(self):
         """Called before the request is made. Throws error if Limit is reached."""
