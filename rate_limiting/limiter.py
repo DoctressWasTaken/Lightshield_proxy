@@ -37,6 +37,9 @@ class LimitHandler:
     reset_ready = False
     bucket_start = None
     bucket_end = None
+    count = None
+    bucket_task_reset = None
+    bucket_task_crack = None
 
     def __init__(self, limits=None, span=None, max_=None, method='app'):
 
