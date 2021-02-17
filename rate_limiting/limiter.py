@@ -47,7 +47,7 @@ class LimitHandler:
         self.span = int(span)  # Duration of the bucket
         self.max = max(5, max_ - 5)  # Max Calls per bucket (Reduced by 1 for safety measures)
         logging.info(f"Initiated {self.max}:{self.span}.")
-        asyncio.run(self.init_bucket())
+        asyncio.get_running_loop().run_until_complete(self.init_bucket())
 
     def __repr__(self):
 
