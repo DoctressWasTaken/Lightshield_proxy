@@ -59,6 +59,8 @@ class LimitHandler:
 
         The bucket is unverified by default but can be started verified if its initialized by a delayed request.
         """
+        self.bucket_task_crack.cancel()
+        self.bucket_task_reset.cancel()
         duration = self.span
         if not pre_verified:
             duration *= 1.2
@@ -93,7 +95,8 @@ class LimitHandler:
         self.bucket_start = verified_start
         self.bucket_end = self.bucket_start + timedelta(seconds=self.span)
         self.bucket_task_reset.cancel()
-        self.bucket_task_reset = asyncio.get_event_loop().call_at(self.bucket_end.timestamp(), self.destroy_bucket)
+        self.bucket_task_reset = asyncio.get_event_loop().call_at(
+            (self.bucket_end - datetime.now(timezone.utc)).total_seconds(), self.destroy_bucket)
         logger.info("[%s] Verified bucket.", self.span)
 
     async def destroy_bucket(self):
@@ -108,7 +111,7 @@ class LimitHandler:
         """Called before the request is made. Throws error if Limit is reached."""
         # If already blocked throw exception
         if self.blocked:
-            raise LimitBlocked(await self.when_reset())
+            raise LimitBlocked(self.bucket_task_reset.when())
 
         # If no active bucket create a new one
         if not self.bucket:
@@ -120,9 +123,6 @@ class LimitHandler:
             self.blocked = True
             self.bucket = False
 
-    async def when_reset(self):
-        """Return seconds until reset."""
-        return int((self.bucket_end - datetime.now(timezone.utc)).total_seconds())
 
     async def update(self, date, limits):
         """Called with headers after the request."""
@@ -137,7 +137,7 @@ class LimitHandler:
         local_dt = local.localize(naive, is_dst=None)
         date = local_dt.astimezone(pytz.utc)
         if count <= 5 and date > self.bucket_start:
-            if self.bucket_reset_ready:
+            if self.reset_ready:
                 await self.init_bucket(pre_verified=date, verified_count=count)
             elif self.verified < count:
                 await self.verify_bucket(verified_start=date, verified_count=count)
