@@ -1,7 +1,7 @@
 from aiohttp.web import middleware, HTTPException
 from rate_limiting.limiter import LimitBlocked, LimitHandler
 import logging
-
+import traceback
 logger = logging.getLogger("MethodLimiter")
 logger.propagate = False
 logger.setLevel(logging.INFO)
@@ -51,6 +51,7 @@ class MethodLimiter:
                     response.headers['Date'],
                     response.headers['X-Method-Rate-Limit-Count'])
         except Exception as err:
+            traceback.print_tb(err.__traceback__)
             logger.error("Failed to apply response data to query. [Code: %s]", err)
             raise HTTPException
         return response

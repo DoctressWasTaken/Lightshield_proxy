@@ -1,6 +1,7 @@
 from aiohttp.web import middleware, HTTPException
 from rate_limiting.limiter import LimitBlocked, LimitHandler
 import logging
+import traceback
 
 logger = logging.getLogger("AppLimiter")
 logger.propagate = False
@@ -53,6 +54,8 @@ class AppLimiter:
                     response.headers['Date'],
                     response.headers['X-App-Rate-Limit-Count'])
         except Exception as err:
-            logger.error("Failed to apply response data to query.")
+            traceback.print_tb(err.__traceback__)
+            logger.error("Failed to apply response data to query. [Code: %s]", err)
             raise HTTPException
+
         return response

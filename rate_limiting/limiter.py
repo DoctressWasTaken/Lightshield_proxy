@@ -73,6 +73,7 @@ class LimitHandler:
             self.verified = verified_count
             self.bucket_start = pre_verified
         self.bucket_end = self.bucket_start + timedelta(seconds=duration)
+        self.bucket_end = self.bucket_start + timedelta(seconds=duration)
 
         self.bucket = True
         self.blocked = False
