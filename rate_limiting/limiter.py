@@ -37,7 +37,7 @@ class LimitHandler:
     reset_ready = False
     bucket_start = None
     bucket_end = None
-    count = 0
+    count = None
     bucket_task_reset = None
     bucket_task_crack = None
 
@@ -49,7 +49,6 @@ class LimitHandler:
             max_, span = [int(i) for i in limits]
         self.span = int(span)  # Duration of the bucket
         self.max = max(5, max_ - 5)  # Max Calls per bucket (Reduced by 1 for safety measures)
-        self.bucket_start = datetime.now(timezone.utc) - timedelta(minutes=60)
         logging.info(f"Initiated {self.max}:{self.span}.")
 
     def __repr__(self):
@@ -145,7 +144,9 @@ class LimitHandler:
         local = pytz.timezone('GMT')
         local_dt = local.localize(naive, is_dst=None)
         date = local_dt.astimezone(pytz.utc)
-        if count <= 5 and date > self.bucket_start:
+        if not self.bucket:
+            await self.init_bucket(pre_verified=date, verified_count=count)
+        elif count <= 5 and date > self.bucket_start:
             if self.reset_ready:
                 await self.init_bucket(pre_verified=date, verified_count=count)
             elif self.verified < count:
