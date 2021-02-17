@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from datetime import datetime, timezone, timedelta
 from logging import handlers
@@ -30,6 +31,10 @@ class LimitBlocked(Exception):
 
 
 class LimitHandler:
+    bucket = False
+    blocked = False
+    verified = False
+    reset_ready = False
 
     def __init__(self, limits=None, span=None, max_=None, method='app'):
 
@@ -56,28 +61,75 @@ class LimitHandler:
 
         return self.__repr__()
 
-    @property
-    def add(self):
-        """Called before the request is made. Throws error if Limit is reached."""
-        # (Re)set bucket if applicable
-        if not self.bucket_start or self.bucket_end < datetime.now(timezone.utc):
+    async def init_bucket(self, pre_verified=None, verified_count=0):
+        """Create a new bucket.
+
+        The bucket is unverified by default but can be started verified if its initialized by a delayed request.
+        """
+        duration = self.span
+        if not pre_verified:
+            duration *= 1.2
             self.bucket_start = datetime.now(timezone.utc)
-            self.bucket_end = self.bucket_start + timedelta(seconds=self.span + 1.5)  # EXTRA time when initiated
-            self.bucket_reset_ready = self.bucket_start + timedelta(seconds=(self.span + 1.5) * 0.8)
-            file_logger.info("%s,%s,%s,%s", self.type, self.span, self.max, self.count)
-            self.count = 0
+        else:
+            self.verified = verified_count
+            self.bucket_start = pre_verified
+        self.bucket_end = self.bucket_start + timedelta(seconds=duration)
 
-        if self.count < self.max:
-            self.count += 1
-            return
-        raise LimitBlocked(self.when_reset())
+        self.bucket = True
+        self.blocked = False
+        self.reset_ready = False
+        self.bucket_task_reset = asyncio.get_event_loop().call_later(duration, self.destroy_bucket)
+        self.bucket_task_crack = asyncio.get_event_loop().call_later(duration * 0.8, self.crack_bucket)
+        self.count = 0
 
-    def when_reset(self):
+    async def crack_bucket(self):
+        """Allow the bucket to be reset from this point forward.
+
+        Buckets can be reset early starting 80% of its lifetime along the way.
+        """
+        self.reset_ready = True
+
+    async def verify_bucket(self, verified_start, verified_count):
+        """Verify an existing buckets starting point.
+
+        Removes the extra 20% duration added as safety net.
+        """
+        self.verified = verified_count
+        self.bucket_start = verified_start
+        self.bucket_end = self.bucket_start + timedelta(seconds=self.span)
+        self.bucket_task_reset.cancel()
+        self.bucket_task_reset = asyncio.get_event_loop().call_at(self.bucket_end.timestamp(), self.destroy_bucket)
+
+    async def destroy_bucket(self):
+        """Mark the bucket as destroyed.
+        """
+        self.bucket = False
+        self.blocked = False
+        file_logger.info("%s,%s,%s,%s", self.type, self.span, self.max, self.count)
+
+    async def add(self):
+        """Called before the request is made. Throws error if Limit is reached."""
+        # If already blocked throw exception
+        if self.blocked:
+            raise LimitBlocked(await self.when_reset())
+
+        # If no active bucket create a new one
+        if not self.bucket:
+            await self.init_bucket()
+
+        self.count += 1
+        # If count reaches/breaches max, block.
+        if self.count >= self.max:
+            self.blocked = True
+            self.bucket = False
+
+    async def when_reset(self):
         """Return seconds until reset."""
         return int((self.bucket_end - datetime.now(timezone.utc)).total_seconds())
 
     async def update(self, date, limits):
         """Called with headers after the request."""
+        count = None
         for limit in limits.split(","):
             if int(limit.split(":")[1]) == self.span:
                 count = int(limit.split(":")[0])
@@ -88,22 +140,13 @@ class LimitHandler:
         local_dt = local.localize(naive, is_dst=None)
         date = local_dt.astimezone(pytz.utc)
         if count <= 5 and date > self.bucket_start:
-            if date < self.bucket_reset_ready:
-                if not self.bucket_verifier or self.bucket_verifier < count:
-                    logger.info("[%s] Corrected bucket by %s.", self.span, (date - self.bucket_start).total_seconds())
-                    self.bucket_start = date
-                    self.bucket_end = self.bucket_start + timedelta(seconds=self.span)  # No extra time cause verified
-                    self.bucket_reset_ready = self.bucket_start + timedelta(seconds=self.span * 0.8)
-                    self.bucket_verifier = count
-            else:
-                logger.info("[%s] Initiated new bucket at %s.", self.span, date)
-                file_logger.info("%s,%s,%s,%s", self.type, self.span, self.max, self.count)
-                self.bucket_start = date
-                self.bucket_end = self.bucket_start + timedelta(
-                    seconds=self.span)  # No extra time cause verified
-                self.bucket_reset_ready = self.bucket_start + timedelta(seconds=self.span * 0.8)
-                self.bucket_verifier = count
-                self.count = count
-        elif count > 5 and date > self.bucket_start:
-            if count > self.count:
-                self.count = count
+            if self.bucket_reset_ready:
+                await self.init_bucket(pre_verified=date, verified_count=count)
+            elif self.verified < count:
+                await self.verify_bucket(verified_start=date, verified_count=count)
+
+        if count > self.count:
+            self.count = count
+            if self.count >= self.max:
+                self.blocked = True
+                self.bucket = False

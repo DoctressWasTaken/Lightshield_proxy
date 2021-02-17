@@ -34,7 +34,7 @@ class AppLimiter:
         """
         for limit in self.limits.values():
             try:
-                limit.add
+                await limit.add()
             except LimitBlocked as err:
                 raise HTTPTooManyRequestsLocal(headers={"Retry-After": str(err.retry_after)})
 

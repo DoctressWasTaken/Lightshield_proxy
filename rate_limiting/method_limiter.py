@@ -34,7 +34,7 @@ class MethodLimiter:
         method = "-".join(request.path.split("/")[1:5])
         try:
             for limit in self.limits[method].values():
-                limit.add
+                await limit.add()
         except LimitBlocked as err:
             raise HTTPTooManyRequestsLocal(headers={"Retry-After": str(err.retry_after)})
         except KeyError:
