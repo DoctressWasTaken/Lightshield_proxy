@@ -103,7 +103,8 @@ class LimitHandler:
         self.verified = verified_count
         self.bucket_start = verified_start
         self.bucket_end = self.bucket_start + timedelta(seconds=self.span)
-        self.bucket_task_reset.cancel()
+        if self.bucket_task_reset:
+            self.bucket_task_reset.cancel()
         self.bucket_task_reset = asyncio.get_event_loop().call_at(
             (self.bucket_end - datetime.now(timezone.utc)).total_seconds(), self.destroy_bucket)
         logger.info("[%s] Verified bucket.", self.span)
