@@ -33,7 +33,7 @@ class LimitBlocked(Exception):
 class LimitHandler:
     bucket = False
     blocked = False
-    verified = False
+    verified = 99
     reset_ready = False
     bucket_start = None
     bucket_end = None
@@ -154,7 +154,7 @@ class LimitHandler:
             if self.reset_ready or not self.bucket:
                 if not self.bucket:
                     await self.init_bucket(pre_verified=date, verified_count=count)
-            elif self.verified < count:
+            elif self.verified > count:
                 await self.verify_bucket(verified_start=date, verified_count=count)
 
         if count > self.count:
