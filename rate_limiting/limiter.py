@@ -149,11 +149,9 @@ class LimitHandler:
         local = pytz.timezone('GMT')
         local_dt = local.localize(naive, is_dst=None)
         date = local_dt.astimezone(pytz.utc)
-        if not self.bucket:
-            async with self.init_lock:
-                await self.init_bucket(pre_verified=date, verified_count=count)
-        elif count <= 5 and date > self.bucket_start:
-            if self.reset_ready:
+
+        if count <= 5 and (not self.bucket_start or date > self.bucket_start):
+            if self.reset_ready or not self.bucket:
                 if not self.bucket:
                     await self.init_bucket(pre_verified=date, verified_count=count)
             elif self.verified < count:
