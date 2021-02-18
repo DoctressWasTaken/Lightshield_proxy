@@ -153,10 +153,11 @@ class LimitHandler:
         local_dt = local.localize(naive, is_dst=None)
         date = local_dt.astimezone(pytz.utc)
 
-        if count <= 10 and (not self.bucket_start or date > self.bucket_start):
+        if count <= 10:
             if self.reset_ready or not self.bucket:
                 if not self.bucket:
-                    await self.init_bucket(pre_verified=date, verified_count=count)
+                    async with self.init_lock:
+                        await self.init_bucket(pre_verified=date, verified_count=count)
             elif self.verified > count:
                 await self.verify_bucket(verified_start=date, verified_count=count)
 
