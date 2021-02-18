@@ -87,7 +87,7 @@ class LimitHandler:
         self.bucket_task_reset = asyncio.get_event_loop().call_later(duration, self.destroy_bucket)
         self.bucket_task_crack = asyncio.get_event_loop().call_later(duration * 0.8, self.crack_bucket)
         self.count = 0
-        self.logging.info("[%s] Initiated new bucket at %s.", self.span, self.bucket_start)
+        self.logging.info("[%s] Initiated new bucket at %s. [%s]", self.span, self.bucket_start, pre_verified is None)
 
     def crack_bucket(self):
         """Allow the bucket to be reset from this point forward.
@@ -117,7 +117,7 @@ class LimitHandler:
         self.bucket = False
         self.blocked = False
         file_logger.info("%s,%s,%s,%s", self.type, self.span, self.max, self.count)
-        self.logging.info("[%s] Destroyed bucket.", self.span)
+        self.logging.info("[%s] Destroyed bucket [Verified: %s].", self.span, self.verified)
 
     async def add(self):
         """Called before the request is made. Throws error if Limit is reached."""
