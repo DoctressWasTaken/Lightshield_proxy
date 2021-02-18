@@ -138,7 +138,6 @@ class LimitHandler:
         if self.count >= self.max:
             self.logging.info("[%s] Blocking bucket.", self.span)
             self.blocked = True
-            self.bucket = False
 
     async def update(self, date, limits):
         """Called with headers after the request."""
