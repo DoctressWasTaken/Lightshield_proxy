@@ -48,13 +48,13 @@ class LimitHandler:
         if limits:
             max_, span = [int(i) for i in limits]
         self.span = int(span)  # Duration of the bucket
-        self.max = max(5, max_ - 5)  # Max Calls per bucket (Reduced by 1 for safety measures)
+        self.max = max(5, max_ - 2)  # Max Calls per bucket (Reduced by 1 for safety measures)
         self.logging.info(f"Initiated {self.max}:{self.span}.")
         self.init_lock = asyncio.Lock()
 
     def __repr__(self):
 
-        return str(self.max + 5) + ":" + str(self.span)
+        return str(self.max + 2) + ":" + str(self.span)
 
     def __str__(self):
 
@@ -73,7 +73,7 @@ class LimitHandler:
             self.bucket_task_crack.cancel()
         duration = self.span
         if not pre_verified:
-            duration *= 1.2
+            duration += max(0.5, duration * 0.1)
             self.bucket_start = datetime.now(timezone.utc)
             self.verified = 99
         else:
@@ -151,7 +151,7 @@ class LimitHandler:
         local_dt = local.localize(naive, is_dst=None)
         date = local_dt.astimezone(pytz.utc)
 
-        if count <= 5 and (not self.bucket_start or date > self.bucket_start):
+        if count <= 10 and (not self.bucket_start or date > self.bucket_start):
             if self.reset_ready or not self.bucket:
                 if not self.bucket:
                     await self.init_bucket(pre_verified=date, verified_count=count)
