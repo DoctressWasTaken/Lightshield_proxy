@@ -37,7 +37,7 @@ class LimitHandler:
     reset_ready = False
     bucket_start = None
     bucket_end = None
-    count = None
+    count = 0
     bucket_task_reset = None
     bucket_task_crack = None
 
