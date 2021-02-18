@@ -75,6 +75,7 @@ class LimitHandler:
         if not pre_verified:
             duration *= 1.2
             self.bucket_start = datetime.now(timezone.utc)
+            self.verified = 99
         else:
             self.verified = verified_count
             self.bucket_start = pre_verified
