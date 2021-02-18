@@ -64,6 +64,8 @@ class LimitHandler:
 
         The bucket is unverified by default but can be started verified if its initialized by a delayed request.
         """
+        if self.bucket:
+            return
         if self.bucket_task_reset:
             self.bucket_task_reset.cancel()
         if self.bucket_task_crack:
