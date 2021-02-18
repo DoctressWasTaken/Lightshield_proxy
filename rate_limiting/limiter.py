@@ -108,6 +108,8 @@ class LimitHandler:
         """
         if verified_count > self.verified:
             return
+        self.logging.info("[%s] Verifying bucket [%s -> %s].", self.span, self.verified, verified_count)
+
         self.verified = verified_count
         self.bucket_start = verified_start
         self.bucket_end = self.bucket_start + timedelta(seconds=self.span)
@@ -119,7 +121,6 @@ class LimitHandler:
             return
         self.bucket_task_reset = asyncio.get_event_loop().call_at(
             (self.bucket_end - datetime.now(timezone.utc)).total_seconds(), self.destroy_bucket)
-        self.logging.info("[%s] Verified bucket.", self.span)
 
     def destroy_bucket(self):
         """Mark the bucket as destroyed.
