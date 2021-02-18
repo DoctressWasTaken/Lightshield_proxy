@@ -51,6 +51,7 @@ class LimitHandler:
         self.max = max(5, max_ - 2)  # Max Calls per bucket (Reduced by 1 for safety measures)
         self.logging.info(f"Initiated {self.max}:{self.span}.")
         self.init_lock = asyncio.Lock()
+        self.verify_lock = asyncio.Lock()
 
     def __repr__(self):
 
@@ -105,6 +106,8 @@ class LimitHandler:
 
         Removes the extra 20% duration added as safety net.
         """
+        if verified_count > self.verified:
+            return
         self.verified = verified_count
         self.bucket_start = verified_start
         self.bucket_end = self.bucket_start + timedelta(seconds=self.span)
@@ -162,7 +165,8 @@ class LimitHandler:
                     async with self.init_lock:
                         await self.init_bucket(pre_verified=date, verified_count=count)
             elif self.verified > count:
-                await self.verify_bucket(verified_start=date, verified_count=count)
+                async with self.verify_lock:
+                    await self.verify_bucket(verified_start=date, verified_count=count)
 
         if count > self.count:
             self.count = count
