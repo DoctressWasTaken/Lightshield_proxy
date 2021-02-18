@@ -122,7 +122,7 @@ class LimitHandler:
         """Called before the request is made. Throws error if Limit is reached."""
         # If already blocked throw exception
         if self.blocked:
-            raise LimitBlocked((self.bucket_end - datetime.now(timezone.utc)).total_seconds())
+            raise LimitBlocked(int((self.bucket_end - datetime.now(timezone.utc)).total_seconds()))
 
         # If no active bucket create a new one
         if not self.bucket:
