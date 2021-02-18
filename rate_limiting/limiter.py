@@ -87,8 +87,10 @@ class LimitHandler:
         self.reset_ready = False
         self.bucket_task_reset = asyncio.get_event_loop().call_later(duration, self.destroy_bucket)
         self.bucket_task_crack = asyncio.get_event_loop().call_later(duration * 0.8, self.crack_bucket)
+        self.logging.info("[%s] Initiated new bucket at %s. [old: %s/%s][%s]",
+                          self.span, self.bucket_start, self.count,
+                          self.max, pre_verified is None)
         self.count = 0
-        self.logging.info("[%s] Initiated new bucket at %s. [%s]", self.span, self.bucket_start, pre_verified is None)
 
     def crack_bucket(self):
         """Allow the bucket to be reset from this point forward.
