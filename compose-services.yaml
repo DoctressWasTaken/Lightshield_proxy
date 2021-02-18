@@ -29,7 +29,6 @@ services:
     restart: always
     volumes:
       - /logs/lightshield_proxy/:/logs/
-      - ./configs/:/project/configs/
     networks:
       default:
         aliases:
@@ -51,7 +50,6 @@ services:
     restart: always
     volumes:
       - /logs/lightshield_proxy/:/logs/
-      - ./configs/:/project/configs/
     networks:
       default:
         aliases:
@@ -72,7 +70,6 @@ services:
     restart: always
     volumes:
       - /logs/lightshield_proxy/:/logs/
-      - ./configs/:/project/configs/
     networks:
       default:
         aliases:
