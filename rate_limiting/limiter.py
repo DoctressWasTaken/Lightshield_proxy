@@ -164,4 +164,3 @@ class LimitHandler:
             self.count = count
             if self.count >= self.max:
                 self.blocked = True
-                self.bucket = False
