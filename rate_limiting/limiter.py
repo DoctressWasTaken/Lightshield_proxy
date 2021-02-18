@@ -110,6 +110,10 @@ class LimitHandler:
         self.bucket_end = self.bucket_start + timedelta(seconds=self.span)
         if self.bucket_task_reset:
             self.bucket_task_reset.cancel()
+        if self.bucket_end >= datetime.now(timezone.utc):
+            self.bucket = False
+            self.logging.info("[%s] Verified bucket. Was overdo.", self.span)
+            return
         self.bucket_task_reset = asyncio.get_event_loop().call_at(
             (self.bucket_end - datetime.now(timezone.utc)).total_seconds(), self.destroy_bucket)
         self.logging.info("[%s] Verified bucket.", self.span)
