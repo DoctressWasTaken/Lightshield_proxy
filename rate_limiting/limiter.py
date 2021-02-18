@@ -50,6 +50,7 @@ class LimitHandler:
         self.span = int(span)  # Duration of the bucket
         self.max = max(5, max_ - 5)  # Max Calls per bucket (Reduced by 1 for safety measures)
         self.logging.info(f"Initiated {self.max}:{self.span}.")
+        self.init_lock = asyncio.Lock()
 
     def __repr__(self):
 
@@ -126,7 +127,8 @@ class LimitHandler:
 
         # If no active bucket create a new one
         if not self.bucket:
-            await self.init_bucket()
+            async with self.init_lock:
+                await self.init_bucket()
 
         self.count += 1
         # If count reaches/breaches max, block.
@@ -148,10 +150,12 @@ class LimitHandler:
         local_dt = local.localize(naive, is_dst=None)
         date = local_dt.astimezone(pytz.utc)
         if not self.bucket:
-            await self.init_bucket(pre_verified=date, verified_count=count)
+            async with self.init_lock:
+                await self.init_bucket(pre_verified=date, verified_count=count)
         elif count <= 5 and date > self.bucket_start:
             if self.reset_ready:
-                await self.init_bucket(pre_verified=date, verified_count=count)
+                if not self.bucket:
+                    await self.init_bucket(pre_verified=date, verified_count=count)
             elif self.verified < count:
                 await self.verify_bucket(verified_start=date, verified_count=count)
 
