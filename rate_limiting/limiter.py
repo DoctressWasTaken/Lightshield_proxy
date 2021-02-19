@@ -137,8 +137,9 @@ class LimitHandler:
         # If no active bucket create a new one
         if not self.bucket:
             async with self.init_lock:
-                self.logging.info("Initiating reset on call")
-                await self.init_bucket()
+                if not self.bucket:
+                    self.logging.info("Initiating reset on call")
+                    await self.init_bucket()
 
         self.count += 1
         # If count reaches/breaches max, block.
