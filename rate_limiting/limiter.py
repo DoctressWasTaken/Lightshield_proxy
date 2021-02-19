@@ -85,21 +85,12 @@ class LimitHandler:
 
         self.bucket = True
         self.blocked = False
-        self.reset_ready = False
+        self.reset_ready = datetime.now(timezone.utc) + timedelta(seconds=duration * 0.8)
         self.bucket_task_reset = asyncio.get_event_loop().call_later(duration, self.destroy_bucket)
-        self.bucket_task_crack = asyncio.get_event_loop().call_later(duration * 0.8, self.crack_bucket)
         self.logging.info("[%s] Initiated new bucket at %s. [old: %s/%s][%s]",
                           self.span, self.bucket_start, self.count,
                           self.max, pre_verified is None)
         self.count = 0
-
-    def crack_bucket(self):
-        """Allow the bucket to be reset from this point forward.
-
-        Buckets can be reset early starting 80% of its lifetime along the way.
-        """
-        self.reset_ready = True
-        self.logging.info("[%s] Cracked bucket.", self.span)
 
     async def verify_bucket(self, verified_start, verified_count):
         """Verify an existing buckets starting point.
@@ -115,12 +106,12 @@ class LimitHandler:
         self.bucket_end = self.bucket_start + timedelta(seconds=self.span)
         if self.bucket_task_reset:
             self.bucket_task_reset.cancel()
-        if self.bucket_end <= datetime.now(timezone.utc):
+        if self.bucket_end <= (now := datetime.now(timezone.utc)):
             self.bucket = False
             self.logging.info("[%s] Verified bucket. Was overdo.", self.span)
             return
         self.bucket_task_reset = asyncio.get_event_loop().call_at(
-            (self.bucket_end - datetime.now(timezone.utc)).total_seconds(), self.destroy_bucket)
+            (self.bucket_end - now).total_seconds(), self.destroy_bucket)
 
     def destroy_bucket(self):
         """Mark the bucket as destroyed.
@@ -161,10 +152,15 @@ class LimitHandler:
         date = local_dt.astimezone(pytz.utc)
 
         if count <= 10:
-            if self.reset_ready or not self.bucket:
-                if not self.bucket:
-                    async with self.init_lock:
-                        await self.init_bucket(pre_verified=date, verified_count=count)
+            # If no bucket create one
+            if not self.bucket:
+                async with self.init_lock:
+                    await self.init_bucket(pre_verified=date, verified_count=count)
+            # If bucket is ready to be reset, reset.
+            elif self.reset_ready < date:
+                async with self.init_lock:
+                    await self.init_bucket(pre_verified=date, verified_count=count)
+            # If its a new request, update verification
             elif self.verified > count:
                 async with self.verify_lock:
                     await self.verify_bucket(verified_start=date, verified_count=count)
