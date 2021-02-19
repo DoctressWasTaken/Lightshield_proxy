@@ -95,6 +95,8 @@ class LimitHandler:
                           self.span, self.bucket_start, self.count,
                           self.max, pre_verified is None)
         self.count = 0
+        self.logging.info("Bucket is %s.", self.bucket)
+
 
     async def verify_bucket(self, verified_start, verified_count):
         """Verify an existing buckets starting point.
