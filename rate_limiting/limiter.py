@@ -66,6 +66,7 @@ class LimitHandler:
 
         The bucket is unverified by default but can be started verified if its initialized by a delayed request.
         """
+        self.logging.info("Bucket is %s.", self.bucket)
 
         if self.bucket:
             self.logging.info("Bucket already reset.")
