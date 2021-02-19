@@ -78,7 +78,7 @@ class LimitHandler:
             self.bucket_task_crack.cancel()
         duration = self.span
         if not pre_verified:
-            duration += max(0.5, duration * 0.1)
+            duration = self.span + max(0.5, self.span * 0.1)
             self.bucket_start = datetime.now(timezone.utc)
             self.verified = 99
         else:
