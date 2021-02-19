@@ -130,6 +130,7 @@ class LimitHandler:
         # If no active bucket create a new one
         if not self.bucket:
             async with self.init_lock:
+                self.logging.info("Initiating reset on call")
                 await self.init_bucket()
 
         self.count += 1
@@ -155,10 +156,12 @@ class LimitHandler:
             # If no bucket create one
             if not self.bucket:
                 async with self.init_lock:
+                    self.logging.info("Initiating reset on response (no bucket)")
                     await self.init_bucket(pre_verified=date, verified_count=count)
             # If bucket is ready to be reset, reset.
             elif self.reset_ready < date:
                 async with self.init_lock:
+                    self.logging.info("Initiating reset on response (old bucket)")
                     await self.init_bucket(pre_verified=date, verified_count=count)
             # If its a new request, update verification
             elif self.verified > count:
