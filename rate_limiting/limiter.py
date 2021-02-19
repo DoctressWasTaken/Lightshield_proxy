@@ -39,7 +39,7 @@ class LimitHandler:
     bucket_end = None
     count = 0
     bucket_task_reset = None
-    bucket_task_crack = None
+    bucket_task_reset_verified = None
 
     def __init__(self, limits=None, span=None, max_=None, method='app', logging=logger):
 
@@ -75,13 +75,15 @@ class LimitHandler:
         self.logging.info("Initialising.")
         if self.bucket_task_reset:
             self.bucket_task_reset.cancel()
-        if self.bucket_task_crack:
-            self.bucket_task_crack.cancel()
+        if self.bucket_task_reset_verified:
+            self.bucket_task_reset_verified.cancel()
         duration = self.span
+
         if not pre_verified:
             duration = self.span + max(0.5, self.span * 0.1)
             self.bucket_start = datetime.now(timezone.utc)
             self.verified = 99
+            self.bucket_task_reset = asyncio.get_event_loop().call_later(duration, self.destroy_bucket)
         else:
             self.verified = verified_count
             self.bucket_start = pre_verified
@@ -91,13 +93,12 @@ class LimitHandler:
         self.bucket = True
         self.blocked = False
         self.reset_ready = datetime.now(timezone.utc) + timedelta(seconds=duration * 0.8)
-        self.bucket_task_reset = asyncio.get_event_loop().call_later(duration, self.destroy_bucket)
+        self.bucket_task_reset_verified = asyncio.get_event_loop().call_later(self.span, self.destroy_bucket)
         self.logging.info("[%s] Initiated new bucket at %s. [old: %s/%s][%s]",
                           self.span, self.bucket_start, self.count,
                           self.max, pre_verified is None)
         self.count = 0
         self.logging.info("Bucket is %s.", self.bucket)
-
 
     async def verify_bucket(self, verified_start, verified_count):
         """Verify an existing buckets starting point.
@@ -111,18 +112,17 @@ class LimitHandler:
         self.verified = verified_count
         self.bucket_start = verified_start
         self.bucket_end = self.bucket_start + timedelta(seconds=self.span)
-        if self.bucket_task_reset:
-            self.bucket_task_reset.cancel()
         if self.bucket_end <= (now := datetime.now(timezone.utc)):
             self.bucket = False
             self.logging.info("[%s] Verified bucket. Was overdo.", self.span)
             return
-        self.bucket_task_reset = asyncio.get_event_loop().call_at(
-            (self.bucket_end - now).total_seconds(), self.destroy_bucket)
 
-    def destroy_bucket(self):
+    def destroy_bucket(self, verify=False):
         """Mark the bucket as destroyed.
         """
+        if verify and not self.verified:
+            pass
+        self.bucket_task_reset.cancel()
         self.bucket = False
         self.blocked = False
         file_logger.info("%s,%s,%s,%s", self.type, self.span, self.max, self.count)
