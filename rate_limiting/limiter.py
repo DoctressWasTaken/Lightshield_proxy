@@ -66,13 +66,8 @@ class LimitHandler:
 
         The bucket is unverified by default but can be started verified if its initialized by a delayed request.
         """
-        self.logging.info("Bucket is %s.", self.bucket)
-
         if self.bucket:
-            self.logging.info("Bucket already reset.")
             return
-
-        self.logging.info("Initialising.")
         if self.bucket_task_reset:
             self.bucket_task_reset.cancel()
         if self.bucket_task_reset_verified:
@@ -98,7 +93,6 @@ class LimitHandler:
                           self.span, self.bucket_start, self.count,
                           self.max, pre_verified is None)
         self.count = 0
-        self.logging.info("Bucket is %s.", self.bucket)
 
     async def verify_bucket(self, verified_start, verified_count):
         """Verify an existing buckets starting point.
@@ -122,7 +116,8 @@ class LimitHandler:
         """
         if verify and not self.verified:
             pass
-        self.bucket_task_reset.cancel()
+        if self.bucket_task_reset:
+            self.bucket_task_reset.cancel()
         self.bucket = False
         self.blocked = False
         file_logger.info("%s,%s,%s,%s", self.type, self.span, self.max, self.count)
@@ -138,7 +133,6 @@ class LimitHandler:
         if not self.bucket:
             async with self.init_lock:
                 if not self.bucket:
-                    self.logging.info("Initiating reset on call")
                     await self.init_bucket()
 
         self.count += 1
@@ -164,12 +158,10 @@ class LimitHandler:
             # If no bucket create one
             if not self.bucket:
                 async with self.init_lock:
-                    self.logging.info("Initiating reset on response (no bucket)")
                     await self.init_bucket(pre_verified=date, verified_count=count)
             # If bucket is ready to be reset, reset.
             elif self.reset_ready < date:
                 async with self.init_lock:
-                    self.logging.info("Initiating reset on response (old bucket)")
                     await self.init_bucket(pre_verified=date, verified_count=count)
             # If its a new request, update verification
             elif self.verified > count:
