@@ -49,7 +49,7 @@ class LimitHandler:
             max_, span = [int(i) for i in limits]
         self.span = int(span)  # Duration of the bucket
         self.max = max(5, max_ - 2)  # Max Calls per bucket (Reduced by 1 for safety measures)
-        self.logging.info(f"Initiated {self.max}:{self.span}.")
+        self.logging.info(f"Initiated %s with %s:%s.", self.type, self.max, self.span)
         self.init_lock = asyncio.Lock()
         self.verify_lock = asyncio.Lock()
 
@@ -89,8 +89,8 @@ class LimitHandler:
         self.blocked = False
         self.reset_ready = datetime.now(timezone.utc) + timedelta(seconds=duration * 0.8)
         self.bucket_task_reset_verified = asyncio.get_event_loop().call_later(self.span, self.destroy_bucket)
-        self.logging.info("[%s] Initiated new bucket at %s. [old: %s/%s][%s]",
-                          self.span, self.bucket_start, self.count,
+        self.logging.info("[%s] Initiated new bucket at %s. [previous %s: %s/%s][%s]",
+                          self.span, self.bucket_start, self.type, self.count,
                           self.max, pre_verified is None)
         self.count = 0
 
