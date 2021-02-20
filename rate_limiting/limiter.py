@@ -48,7 +48,7 @@ class LimitHandler:
         if limits:
             max_, span = [int(i) for i in limits]
         self.span = int(span)  # Duration of the bucket
-        self.max = max(5, max_ - 2)  # Max Calls per bucket (Reduced by 1 for safety measures)
+        self.max = max(5, max_ - 2)  # Max Calls per bucket (Reduced by some for safety measures)
         self.logging.info(f"Initiated %s with %s:%s.", self.type, self.max, self.span)
         self.init_lock = asyncio.Lock()
         self.verify_lock = asyncio.Lock()
@@ -101,14 +101,14 @@ class LimitHandler:
         """
         if verified_count > self.verified:
             return
-        self.logging.info("[%s] Verifying bucket [%s -> %s].", self.span, self.verified, verified_count)
+        self.logging.debug("[%s] Verifying bucket [%s -> %s].", self.span, self.verified, verified_count)
 
         self.verified = verified_count
         self.bucket_start = verified_start
         self.bucket_end = self.bucket_start + timedelta(seconds=self.span)
         if self.bucket_end <= (now := datetime.now(timezone.utc)):
             self.bucket = False
-            self.logging.info("[%s] Verified bucket. Was overdo.", self.span)
+            self.logging.debug("[%s] Verified bucket. Was overdo.", self.span)
             return
 
     def destroy_bucket(self, verify=False):
