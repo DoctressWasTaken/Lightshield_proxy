@@ -1,31 +1,19 @@
 import asyncio
 import logging
 from datetime import datetime, timezone, timedelta
-from logging import handlers
 
 import pytz
-
-import settings
 
 logger = logging.getLogger("Limiter")
 logger.propagate = False
 logger.setLevel(logging.INFO)
 handler = logging.StreamHandler()
 handler.setLevel(logging.INFO)
-handler.setFormatter(
-    logging.Formatter('%(asctime)s [Limiter] %(message)s'))
+handler.setFormatter(logging.Formatter("%(asctime)s [Limiter] %(message)s"))
 logger.addHandler(handler)
-
-file_logger = logging.getLogger("log_writer")
-file_logger.setLevel(logging.INFO)
-file_logger.addHandler(
-    handlers.TimedRotatingFileHandler('/logs/%s_bucket_usage_.log' % settings.SERVER.lower(), when='h', interval=1,
-                                      backupCount=24)
-)
 
 
 class LimitBlocked(Exception):
-
     def __init__(self, retry_after):
         self.retry_after = retry_after
 
@@ -41,14 +29,16 @@ class LimitHandler:
     bucket_task_reset = None
     bucket_task_reset_verified = None
 
-    def __init__(self, limits=None, span=None, max_=None, method='app', logging=logger):
+    def __init__(self, limits=None, span=None, max_=None, method="app", logging=logger):
 
         self.type = method
         self.logging = logging
         if limits:
             max_, span = [int(i) for i in limits]
         self.span = int(span)  # Duration of the bucket
-        self.max = max(5, max_ - 2)  # Max Calls per bucket (Reduced by some for safety measures)
+        self.max = max(
+            5, max_ - 2
+        )  # Max Calls per bucket (Reduced by some for safety measures)
         self.logging.info(f"Initiated %s with %s:%s.", self.type, self.max, self.span)
         self.init_lock = asyncio.Lock()
         self.verify_lock = asyncio.Lock()
@@ -78,7 +68,9 @@ class LimitHandler:
             duration = self.span + max(0.5, self.span * 0.1)
             self.bucket_start = datetime.now(timezone.utc)
             self.verified = 99
-            self.bucket_task_reset = asyncio.get_event_loop().call_later(duration, self.destroy_bucket)
+            self.bucket_task_reset = asyncio.get_event_loop().call_later(
+                duration, self.destroy_bucket
+            )
         else:
             self.verified = verified_count
             self.bucket_start = pre_verified
@@ -87,11 +79,21 @@ class LimitHandler:
 
         self.bucket = True
         self.blocked = False
-        self.reset_ready = datetime.now(timezone.utc) + timedelta(seconds=duration * 0.8)
-        self.bucket_task_reset_verified = asyncio.get_event_loop().call_later(self.span, self.destroy_bucket)
-        self.logging.info("[%s] Initiated new bucket at %s. [previous %s: %s/%s][%s]",
-                          self.span, self.bucket_start, self.type, self.count,
-                          self.max, pre_verified is None)
+        self.reset_ready = datetime.now(timezone.utc) + timedelta(
+            seconds=duration * 0.8
+        )
+        self.bucket_task_reset_verified = asyncio.get_event_loop().call_later(
+            self.span, self.destroy_bucket
+        )
+        self.logging.info(
+            "[%s] Initiated new bucket at %s. [previous %s: %s/%s][%s]",
+            self.span,
+            self.bucket_start,
+            self.type,
+            self.count,
+            self.max,
+            pre_verified is None,
+        )
         self.count = 0
 
     async def verify_bucket(self, verified_start, verified_count):
@@ -101,7 +103,12 @@ class LimitHandler:
         """
         if verified_count > self.verified:
             return
-        self.logging.debug("[%s] Verifying bucket [%s -> %s].", self.span, self.verified, verified_count)
+        self.logging.debug(
+            "[%s] Verifying bucket [%s -> %s].",
+            self.span,
+            self.verified,
+            verified_count,
+        )
 
         self.verified = verified_count
         self.bucket_start = verified_start
@@ -112,22 +119,24 @@ class LimitHandler:
             return
 
     def destroy_bucket(self, verify=False):
-        """Mark the bucket as destroyed.
-        """
+        """Mark the bucket as destroyed."""
         if verify and not self.verified:
             pass
         if self.bucket_task_reset:
             self.bucket_task_reset.cancel()
         self.bucket = False
         self.blocked = False
-        file_logger.info("%s,%s,%s,%s", self.type, self.span, self.max, self.count)
-        self.logging.info("[%s] Destroyed bucket [Verified: %s].", self.span, self.verified)
+        self.logging.info(
+            "[%s] Destroyed bucket [Verified: %s].", self.span, self.verified
+        )
 
     async def add(self):
         """Called before the request is made. Throws error if Limit is reached."""
         # If already blocked throw exception
         if self.blocked:
-            raise LimitBlocked(int((self.bucket_end - datetime.now(timezone.utc)).total_seconds()))
+            raise LimitBlocked(
+                int((self.bucket_end - datetime.now(timezone.utc)).total_seconds())
+            )
 
         # If no active bucket create a new one
         if not self.bucket:
@@ -147,10 +156,8 @@ class LimitHandler:
         for limit in limits.split(","):
             if int(limit.split(":")[1]) == self.span:
                 count = int(limit.split(":")[0])
-        naive = datetime.strptime(
-            date,
-            '%a, %d %b %Y %H:%M:%S GMT')
-        local = pytz.timezone('GMT')
+        naive = datetime.strptime(date, "%a, %d %b %Y %H:%M:%S GMT")
+        local = pytz.timezone("GMT")
         local_dt = local.localize(naive, is_dst=None)
         date = local_dt.astimezone(pytz.utc)
 

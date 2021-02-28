@@ -10,7 +10,7 @@ class JsonConfig:  # pragma: no cover
         self._config = config
 
     @classmethod
-    def read(cls, envvar='CONFIG_FILE', filename='config.json'):
+    def read(cls, envvar="CONFIG_FILE", filename="config.json"):
         """Read a JSON configuration file and create a new configuration."""
         filename = os.environ.get(envvar, filename)
         directory = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -42,7 +42,7 @@ class JsonConfig:  # pragma: no cover
         value = self.get(key, default)
         if isinstance(value, bool):
             return value
-        return value.lower() in ('true', 't', 'yes', 'y')
+        return value.lower() in ("true", "t", "yes", "y")
 
 
 CONFIG = JsonConfig.read()
@@ -52,4 +52,3 @@ CONFIG = JsonConfig.read()
 API_KEY = CONFIG.get("API_KEY", None)
 
 SERVER = CONFIG.get("SERVER", "")
-

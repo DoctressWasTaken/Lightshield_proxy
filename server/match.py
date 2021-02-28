@@ -8,8 +8,7 @@ logger.propagate = False
 logger.setLevel(logging.INFO)
 handler = logging.StreamHandler()
 handler.setLevel(logging.INFO)
-handler.setFormatter(
-    logging.Formatter('%(asctime)s [Match-V4] %(message)s'))
+handler.setFormatter(logging.Formatter("%(asctime)s [Match-V4] %(message)s"))
 logger.addHandler(handler)
 
 
@@ -23,7 +22,11 @@ async def match_v4_matches(self, request):
             if header in self.required_header:
                 returned_headers[header] = response.headers[header]
 
-        res = web.Response(text=json.dumps(await response.json()), headers=returned_headers, status=response.status)
+        res = web.Response(
+            text=json.dumps(await response.json()),
+            headers=returned_headers,
+            status=response.status,
+        )
         return res
 
 
@@ -37,7 +40,11 @@ async def match_v4_matchlists(self, request):
             if header in self.required_header:
                 returned_headers[header] = response.headers[header]
 
-        res = web.Response(text=json.dumps(await response.json()), headers=returned_headers, status=response.status)
+        res = web.Response(
+            text=json.dumps(await response.json()),
+            headers=returned_headers,
+            status=response.status,
+        )
         return res
 
 
@@ -51,6 +58,9 @@ async def match_v4_timelines(self, request):
             if header in self.required_header:
                 returned_headers[header] = response.headers[header]
 
-        res = web.Response(text=json.dumps(await response.json()), headers=returned_headers, status=response.status)
+        res = web.Response(
+            text=json.dumps(await response.json()),
+            headers=returned_headers,
+            status=response.status,
+        )
         return res
-

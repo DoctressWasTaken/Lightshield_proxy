@@ -15,12 +15,7 @@ from auth import Headers, ServerCheck
 from rate_limiting.app_limiter import AppLimiter
 from rate_limiting.method_limiter import MethodLimiter
 
-MIDDLEWARES = [
-    AppLimiter,
-    MethodLimiter,
-    Headers,
-    ServerCheck
-]
+MIDDLEWARES = [AppLimiter, MethodLimiter, Headers, ServerCheck]
 
 
 class Proxy:
@@ -37,17 +32,26 @@ class Proxy:
             self.required_header += middleware.required_header
 
     async def make_app(self):
-        self.app = web.Application(middlewares=[cls.middleware for cls in self.middlewares])
+        self.app = web.Application(
+            middlewares=[cls.middleware for cls in self.middlewares]
+        )
         self.session = aiohttp.ClientSession()
-        self.app.add_routes([
-            web.get('/lol/match/v4/matches/{tail:.*}', self.match_v4_matches),
-            web.get('/lol/match/v4/matchlists/{tail:.*}', self.match_v4_matchlists),
-            web.get('/lol/match/v4/timelines/{tail:.*}', self.match_v4_timelines),
-            web.get('/lol/summoner/v4/summoners/{tail:.*}', self.summoner_v4_summoners),
-            web.get('/lol/league/v4/entries/{tail:.*}', self.league_v4_entries),
-            web.get('/lol/league-exp/v4/entries/{tail:.*}', self.league_exp_v4_entries),
-            web.get('/lol/spectator/v4/active-games/{tail:.*}', self.spectator_v4_active_games),
-        ])
+        self.app.add_routes(
+            [
+                web.get("/lol/match/v4/matches/{tail:.*}", self.match_v4_matches),
+                web.get("/lol/match/v4/matchlists/{tail:.*}", self.match_v4_matchlists),
+                web.get("/lol/match/v4/timelines/{tail:.*}", self.match_v4_timelines),
+                web.get(
+                    "/lol/summoner/v4/summoners/{tail:.*}", self.summoner_v4_summoners
+                ),
+                web.get("/lol/league/v4/entries/{tail:.*}", self.league_v4_entries),
+                web.get(
+                    "/lol/league-exp/v4/entries/{tail:.*}", self.league_exp_v4_entries
+                ),
+                web.get(
+                    "/lol/spectator/v4/active-games/{tail:.*}",
+                    self.spectator_v4_active_games,
+                ),
+            ]
+        )
         return self.app
-
-
