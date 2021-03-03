@@ -34,12 +34,12 @@ class LimitHandler:
         self.init_lock = asyncio.Lock()
         self.verify_lock = asyncio.Lock()
 
-        self.logging = logging.getLogger("limit_%s_%s" % (server, method))
+        self.logging = logging.getLogger("limit_%s_%s_%s" % (server, method, span))
         self.logging.propagate = False
         self.logging.setLevel(logging.INFO)
         handler = logging.StreamHandler()
         handler.setLevel(logging.INFO)
-        handler.setFormatter(logging.Formatter(f"%(asctime)s [{server.upper()}:{method}] %(message)s"))
+        handler.setFormatter(logging.Formatter(f"%(asctime)s [{server.upper()}:{method}:{span}] %(message)s"))
         self.logging.addHandler(handler)
 
 
@@ -86,8 +86,7 @@ class LimitHandler:
             self.span, self.destroy_bucket
         )
         self.logging.info(
-            "[%s] Initiated new bucket at %s. [previous %s: %s/%s][%s]",
-            self.span,
+            "Initiated new bucket at %s. [previous %s: %s/%s][%s]",
             self.bucket_start,
             self.type,
             self.count,
@@ -104,8 +103,7 @@ class LimitHandler:
         if verified_count > self.verified:
             return
         self.logging.debug(
-            "[%s] Verifying bucket [%s -> %s].",
-            self.span,
+            "Verifying bucket [%s -> %s].",
             self.verified,
             verified_count,
         )
@@ -115,7 +113,7 @@ class LimitHandler:
         self.bucket_end = self.bucket_start + timedelta(seconds=self.span)
         if self.bucket_end <= (now := datetime.now(timezone.utc)):
             self.bucket = False
-            self.logging.debug("[%s] Verified bucket. Was overdo.", self.span)
+            self.logging.debug("Verified bucket. Was overdo.")
             return
 
     def destroy_bucket(self, verify=False):
@@ -127,7 +125,7 @@ class LimitHandler:
         self.bucket = False
         self.blocked = False
         self.logging.info(
-            "[%s] Destroyed bucket [Verified: %s].", self.span, self.verified
+            "Destroyed bucket [Verified: %s].", self.verified
         )
 
     async def add(self):
@@ -147,7 +145,7 @@ class LimitHandler:
         self.count += 1
         # If count reaches/breaches max, block.
         if self.count >= self.max:
-            self.logging.info("[%s] Blocking bucket.", self.span)
+            self.logging.info("Blocking bucket.")
             self.blocked = True
 
     async def update(self, date, limits):

@@ -42,7 +42,7 @@ class AppLimiter:
         request: Add X-Riot-Token Header with the API Key.
         response: No changes.
         """
-        server = request.rel_url.__str__().split('https://')[0].split('.')[0]
+        server = request.rel_url.__str__().strip('http://').split('.')[0]
         relevant_limits = self.server[server]
 
         for limit in relevant_limits.values():

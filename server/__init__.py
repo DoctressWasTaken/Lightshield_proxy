@@ -12,11 +12,11 @@ from aiohttp import web
 
 sys.path.append(os.getcwd())
 
-from auth import Headers
+from auth import Headers, ServerCheck
 from rate_limiting.app_limiter import AppLimiter
 from rate_limiting.method_limiter import MethodLimiter
 
-MIDDLEWARES = [AppLimiter, MethodLimiter, Headers]
+MIDDLEWARES = [ServerCheck, AppLimiter, MethodLimiter, Headers]
 
 
 class Proxy:
@@ -31,6 +31,7 @@ class Proxy:
         self.required_header = []
         for middleware in self.middlewares:
             self.required_header += middleware.required_header
+
 
     async def make_app(self):
         self.app = web.Application(

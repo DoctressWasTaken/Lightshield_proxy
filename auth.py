@@ -1,3 +1,5 @@
+import logging
+
 from aiohttp.web import middleware, HTTPException
 
 import settings
@@ -29,7 +31,6 @@ class ServerCheck:
 
     def __init__(self):
         self.required_header = []
-        print("Server Check initialized.")
         self.legit_server = ["br1", "eun1", "euw1", "jp1", "kr", "la1", "la2", "na1", "oc1", "tr1"]
 
     @middleware
@@ -39,7 +40,7 @@ class ServerCheck:
         request: Check if correct server
         response: No changes.
         """
-        server = request.rel_url.__str__().split('https://')[0].split('.')[0]
+        server = request.rel_url.__str__().strip('http://').split('.')[0]
         if server not in self.legit_server:
             raise HTTPException
         return await handler(request)
