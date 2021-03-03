@@ -1,7 +1,9 @@
-from aiohttp.web import middleware, HTTPException
-from rate_limiting.limiter import LimitBlocked, LimitHandler
 import logging
 import traceback
+
+from aiohttp.web import middleware, HTTPException
+
+from rate_limiting.limiter import LimitBlocked, LimitHandler
 
 logger = logging.getLogger("AppLimiter")
 logger.propagate = False
@@ -28,7 +30,9 @@ class AppLimiter:
             "X-App-Rate-Limit",
             "Content-Type",
         ]
-        self.limits = {}
+        self.server = {}
+        for server in ["br1", "eun1", "euw1", "jp1", "kr", "la1", "la2", "na1", "oc1", "tr1"]:
+            self.server[server] = {}
         print("App limiter initialized.")
 
     @middleware
@@ -38,7 +42,10 @@ class AppLimiter:
         request: Add X-Riot-Token Header with the API Key.
         response: No changes.
         """
-        for limit in self.limits.values():
+        server = request.rel_url.__str__().split('https://')[0].split('.')[0]
+        relevant_limits = self.server[server]
+
+        for limit in relevant_limits.values():
             try:
                 await limit.add()
             except LimitBlocked as err:
@@ -55,11 +62,9 @@ class AppLimiter:
         try:
             for limit in response.headers["X-App-Rate-Limit"].split(","):
                 max_, span = [int(i) for i in limit.split(":")]
-                if str(span) not in self.limits:
-                    self.limits[str(span)] = LimitHandler(
-                        span=span, max_=max_, logging=logger
-                    )
-                await self.limits[str(span)].update(
+                if str(span) not in relevant_limits:
+                    relevant_limits[str(span)] = LimitHandler(server, span=span, max_=max_)
+                await relevant_limits[str(span)].update(
                     response.headers["Date"], response.headers["X-App-Rate-Limit-Count"]
                 )
         except Exception as err:

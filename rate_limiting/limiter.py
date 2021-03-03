@@ -4,15 +4,6 @@ from datetime import datetime, timezone, timedelta
 
 import pytz
 
-logger = logging.getLogger("Limiter")
-logger.propagate = False
-logger.setLevel(logging.INFO)
-handler = logging.StreamHandler()
-handler.setLevel(logging.INFO)
-handler.setFormatter(logging.Formatter("%(asctime)s [Limiter] %(message)s"))
-logger.addHandler(handler)
-
-
 class LimitBlocked(Exception):
     def __init__(self, retry_after):
         self.retry_after = retry_after
@@ -29,7 +20,7 @@ class LimitHandler:
     bucket_task_reset = None
     bucket_task_reset_verified = None
 
-    def __init__(self, limits=None, span=None, max_=None, method="app", logging=logger):
+    def __init__(self, server, limits=None, span=None, max_=None, method="app"):
 
         self.type = method
         self.logging = logging
@@ -42,6 +33,15 @@ class LimitHandler:
         self.logging.info(f"Initiated %s with %s:%s.", self.type, self.max, self.span)
         self.init_lock = asyncio.Lock()
         self.verify_lock = asyncio.Lock()
+
+        self.logging = logging.getLogger("limit_%s_%s" % (server, method))
+        self.logging.propagate = False
+        self.logging.setLevel(logging.INFO)
+        handler = logging.StreamHandler()
+        handler.setLevel(logging.INFO)
+        handler.setFormatter(logging.Formatter(f"%(asctime)s [{server.upper()}:{method}] %(message)s"))
+        self.logging.addHandler(handler)
+
 
     def __repr__(self):
 

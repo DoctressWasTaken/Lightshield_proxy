@@ -4,18 +4,19 @@
 Routes and ratelimits all calls to the API.
 """
 import asyncio  # noqa: F401
-from aiohttp import web
-import aiohttp
-import sys
 import os
+import sys
+
+import aiohttp
+from aiohttp import web
 
 sys.path.append(os.getcwd())
 
-from auth import Headers, ServerCheck
+from auth import Headers
 from rate_limiting.app_limiter import AppLimiter
 from rate_limiting.method_limiter import MethodLimiter
 
-MIDDLEWARES = [AppLimiter, MethodLimiter, Headers, ServerCheck]
+MIDDLEWARES = [AppLimiter, MethodLimiter, Headers]
 
 
 class Proxy:

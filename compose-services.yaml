@@ -1,58 +1,18 @@
 version: '3.7'
 services:
 
-  proxy_na1:
+  proxy:
     build:
       dockerfile: Dockerfile
       context: .
     image: lightshield/proxy:${TAG}
-    container_name: lightshield_proxy_na1
-    environment:
-      - SERVER=NA1
+    container_name: lightshield_proxy
     env_file:
       - secrets.env
     restart: always
     networks:
-      default:
-        aliases:
-          - lightshield_proxy_na1
-    logging:
-      driver: "json-file"
-      options:
-       max-file: "5"
-       max-size: "10m"
-
-
-  proxy_euw1:
-    image: lightshield/proxy:${TAG}
-    container_name: lightshield_proxy_euw1
-    environment:
-      - SERVER=EUW1
-    env_file:
-      - secrets.env
-    restart: always
-    networks:
-      default:
-        aliases:
-          - lightshield_proxy_euw1
-    logging:
-      driver: "json-file"
-      options:
-       max-file: "5"
-       max-size: "10m"
-
-  proxy_kr:
-    image: lightshield/proxy:${TAG}
-    container_name: lightshield_proxy_kr
-    environment:
-      - SERVER=KR
-    env_file:
-      - secrets.env
-    restart: always
-    networks:
-      default:
-        aliases:
-          - lightshield_proxy_kr
+      aliases:
+        - proxy
     logging:
       driver: "json-file"
       options:

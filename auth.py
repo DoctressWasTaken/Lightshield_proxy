@@ -1,8 +1,5 @@
-import asyncio
 from aiohttp.web import middleware, HTTPException
-import os
-from datetime import datetime
-import logging
+
 import settings
 
 
@@ -33,7 +30,7 @@ class ServerCheck:
     def __init__(self):
         self.required_header = []
         print("Server Check initialized.")
-        self.required_name = "%s.api.riotgames.com" % settings.SERVER.lower()
+        self.legit_server = ["br1", "eun1", "euw1", "jp1", "kr", "la1", "la2", "na1", "oc1", "tr1"]
 
     @middleware
     async def middleware(self, request, handler):
@@ -42,6 +39,7 @@ class ServerCheck:
         request: Check if correct server
         response: No changes.
         """
-        if self.required_name not in request.rel_url.__str__().split("/")[2]:
+        server = request.rel_url.__str__().split('https://')[0].split('.')[0]
+        if server not in self.legit_server:
             raise HTTPException
         return await handler(request)

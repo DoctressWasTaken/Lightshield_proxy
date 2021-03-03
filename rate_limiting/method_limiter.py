@@ -29,7 +29,10 @@ class MethodLimiter:
             "X-Method-Rate-Limit-Count",
             "X-Method-Rate-Limit",
         ]
-        self.limits = {}
+        self.server = {}
+        for server in ["br1", "eun1", "euw1", "jp1", "kr", "la1", "la2", "na1", "oc1", "tr1"]:
+            self.server[server] = {}
+
 
     @middleware
     async def middleware(self, request, handler):
@@ -38,27 +41,28 @@ class MethodLimiter:
         request: Add X-Riot-Token Header with the API Key.
         response: No changes.
         """
+        server = request.rel_url.__str__().split('https://')[0].split('.')[0]
+        relevant_limits = self.server[server]
+
         method = "-".join(request.path.split("/")[1:5])
         try:
-            for limit in self.limits[method].values():
+            for limit in relevant_limits[method].values():
                 await limit.add()
         except LimitBlocked as err:
             raise HTTPTooManyRequestsLocal(
                 headers={"Retry-After": str(err.retry_after)}
             )
         except KeyError:
-            self.limits[method] = {}
+            relevant_limits[method] = {}
 
         response = await handler(request)
         try:
             for limit in response.headers["X-Method-Rate-Limit"].split(","):
                 max_, span = limit.split(":")
                 max_ = int(max_)
-                if span not in self.limits[method]:
-                    self.limits[method][span] = LimitHandler(
-                        span=int(span), max_=max_, method=method, logging=logger
-                    )
-                await self.limits[method][span].update(
+                if span not in relevant_limits[method]:
+                    relevant_limits[method][span] = LimitHandler(server, span=int(span), max_=max_, method=method)
+                await relevant_limits[method][span].update(
                     response.headers["Date"],
                     response.headers["X-Method-Rate-Limit-Count"],
                 )
