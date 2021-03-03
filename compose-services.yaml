@@ -10,9 +10,6 @@ services:
     env_file:
       - secrets.env
     restart: always
-    networks:
-      aliases:
-        - proxy
     logging:
       driver: "json-file"
       options:
