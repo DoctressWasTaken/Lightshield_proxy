@@ -1,179 +1,146 @@
 import asyncio
 import logging
-from datetime import datetime, timezone, timedelta
+from datetime import timedelta
 
-import pytz
+import settings
+from exceptions import LimitBlocked
 
-class LimitBlocked(Exception):
-    def __init__(self, retry_after):
-        self.retry_after = retry_after
+
+class Bucket:
+    count = 0
+    over_requests = 0
+    blocked = False
+    end_max = None
+    latest_count = 0
+
+    def __init__(self, limit, logging, max, start, end_min):
+        self.logging = logging
+        self.limit = limit
+        self.max = max
+        self.start = start
+        self.latest_timestamp = start
+        self.end_min = end_min
+        self.end_max = end_min + timedelta(seconds=2)
+        if settings.LIMIT_SHARE < 1:
+            self.count += int((1 - settings.LIMIT_SHARE) * self.max) + 1
+
+    async def add(self):
+        self.count += 1
+        if self.count >= self.max:
+            self.blocked = True
+
+    async def update_count(self, count):
+        if self.count < count:
+            self.count = count
+            if self.count >= self.max:
+                self.blocked = True
+
+    async def set_end_max(self, end_max):
+        if self.end_max > end_max:
+            self.end_max = end_max
+
+    async def close(self, start_next):
+        """Send a short message with status of the closing bucket."""
+        self.logging.info(
+            "",
+            extra={
+                "previous": "%s/%s" % (self.count, self.max),
+                "dead": round((self.end_max - self.end_min).total_seconds(), 5),
+                "space": round((start_next - self.end_max).total_seconds(), 5),
+                "over": self.over_requests,
+            },
+        )
 
 
 class LimitHandler:
-    bucket = False
-    blocked = False
-    verified = 99
-    reset_ready = False
-    bucket_start = None
-    bucket_end = None
-    count = 0
-    bucket_task_reset = None
-    bucket_task_reset_verified = None
+    bucket = None
 
-    def __init__(self, server, limits=None, span=None, max_=None, method="app"):
+    def __init__(self, server, span=None, limit=None, method="app"):
 
         self.type = method
         self.logging = logging
-        if limits:
-            max_, span = [int(i) for i in limits]
-        self.span = int(span)  # Duration of the bucket
-        self.max = max(
-            5, max_ - 2
-        )  # Max Calls per bucket (Reduced by some for safety measures)
+        self.span = span  # Duration of the bucket
+        self.max = limit  # Max Calls per bucket (Reduced by some for safety measures)
         self.logging.info(f"Initiated %s with %s:%s.", self.type, self.max, self.span)
         self.init_lock = asyncio.Lock()
-        self.verify_lock = asyncio.Lock()
-
-        self.logging = logging.getLogger("limit_%s_%s_%s" % (server, method, span))
+        self.logging = logging.getLogger(f"[{server.upper()}:{method}:{span}]")
         self.logging.propagate = False
         self.logging.setLevel(logging.INFO)
         handler = logging.StreamHandler()
         handler.setLevel(logging.INFO)
-        handler.setFormatter(logging.Formatter(f"%(asctime)s [{server.upper()}:{method}:{span}] %(message)s"))
+        handler.setFormatter(
+            logging.Formatter(
+                "%(asctime)s %(name)45s previous: %(previous)15s | dead: %(dead)7s | space: %(space)8s | over: %(over)s"
+            )
+        )
         self.logging.addHandler(handler)
-
 
     def __repr__(self):
 
-        return str(self.max + 2) + ":" + str(self.span)
+        return str(self.max) + ":" + str(self.span)
 
     def __str__(self):
 
         return self.__repr__()
 
-    async def init_bucket(self, pre_verified=None, verified_count=0):
+    async def init_bucket(self, start_time):
         """Create a new bucket.
 
         The bucket is unverified by default but can be started verified if its initialized by a delayed request.
         """
+        if self.bucket and self.bucket.end_max >= start_time:
+            return
         if self.bucket:
-            return
-        if self.bucket_task_reset:
-            self.bucket_task_reset.cancel()
-        if self.bucket_task_reset_verified:
-            self.bucket_task_reset_verified.cancel()
-        duration = self.span
-
-        if not pre_verified:
-            duration = self.span + max(0.5, self.span * 0.1)
-            self.bucket_start = datetime.now(timezone.utc)
-            self.verified = 99
-            self.bucket_task_reset = asyncio.get_event_loop().call_later(
-                duration, self.destroy_bucket
-            )
-        else:
-            self.verified = verified_count
-            self.bucket_start = pre_verified
-        self.bucket_end = self.bucket_start + timedelta(seconds=duration)
-        self.bucket_end = self.bucket_start + timedelta(seconds=duration)
-
-        self.bucket = True
-        self.blocked = False
-        self.reset_ready = datetime.now(timezone.utc) + timedelta(
-            seconds=duration * 0.8
-        )
-        self.bucket_task_reset_verified = asyncio.get_event_loop().call_later(
-            self.span, self.destroy_bucket
-        )
-        self.logging.info(
-            "Initiated new bucket at %s. [previous %s: %s/%s][%s]",
-            self.bucket_start,
-            self.type,
-            self.count,
-            self.max,
-            pre_verified is None,
-        )
-        self.count = 0
-
-    async def verify_bucket(self, verified_start, verified_count):
-        """Verify an existing buckets starting point.
-
-        Removes the extra 20% duration added as safety net.
-        """
-        if verified_count > self.verified:
-            return
-        self.logging.debug(
-            "Verifying bucket [%s -> %s].",
-            self.verified,
-            verified_count,
+            await self.bucket.close(start_time)
+        self.bucket = Bucket(
+            logging=self.logging,
+            limit=self,
+            max=self.max,
+            start=start_time,
+            end_min=start_time + timedelta(seconds=self.span),
         )
 
-        self.verified = verified_count
-        self.bucket_start = verified_start
-        self.bucket_end = self.bucket_start + timedelta(seconds=self.span)
-        if self.bucket_end <= (now := datetime.now(timezone.utc)):
-            self.bucket = False
-            self.logging.debug("Verified bucket. Was overdo.")
-            return
+    async def acquire_permit(self, planning_timestamp):
+        """Verify if the limit still has space. If not throws error."""
+        if self.bucket.end_max < planning_timestamp:
+            return self.bucket
+        if self.bucket.end_min < planning_timestamp:
+            raise LimitBlocked(retry_at=self.bucket.end_max)
+        if not self.bucket.blocked:
+            return self.bucket
+        self.bucket.over_requests += 1
+        raise LimitBlocked(retry_at=self.bucket.end_max)
 
-    def destroy_bucket(self, verify=False):
-        """Mark the bucket as destroyed."""
-        if verify and not self.verified:
-            pass
-        if self.bucket_task_reset:
-            self.bucket_task_reset.cancel()
-        self.bucket = False
-        self.blocked = False
-        self.logging.info(
-            "Destroyed bucket [Verified: %s].", self.verified
-        )
+    async def add(self, planning_timestamp):
+        if self.bucket.end_max < planning_timestamp:
+            await self.init_bucket(planning_timestamp)
 
-    async def add(self):
-        """Called before the request is made. Throws error if Limit is reached."""
-        # If already blocked throw exception
-        if self.blocked:
-            raise LimitBlocked(
-                int((self.bucket_end - datetime.now(timezone.utc)).total_seconds())
-            )
+        await self.bucket.add()
 
-        # If no active bucket create a new one
-        if not self.bucket:
-            async with self.init_lock:
-                if not self.bucket:
-                    await self.init_bucket()
-
-        self.count += 1
-        # If count reaches/breaches max, block.
-        if self.count >= self.max:
-            self.logging.info("Blocking bucket.")
-            self.blocked = True
-
-    async def update(self, date, limits):
+    async def update(self, pre, post, count):
         """Called with headers after the request."""
-        count = None
-        for limit in limits.split(","):
-            if int(limit.split(":")[1]) == self.span:
-                count = int(limit.split(":")[0])
-        naive = datetime.strptime(date, "%a, %d %b %Y %H:%M:%S GMT")
-        local = pytz.timezone("GMT")
-        local_dt = local.localize(naive, is_dst=None)
-        date = local_dt.astimezone(pytz.utc)
-
-        if count <= 10:
-            # If no bucket create one
+        # Create bucket if non-existent
+        async with self.init_lock:
             if not self.bucket:
-                async with self.init_lock:
-                    await self.init_bucket(pre_verified=date, verified_count=count)
-            # If bucket is ready to be reset, reset.
-            elif self.reset_ready < date:
-                async with self.init_lock:
-                    await self.init_bucket(pre_verified=date, verified_count=count)
-            # If its a new request, update verification
-            elif self.verified > count:
-                async with self.verify_lock:
-                    await self.verify_bucket(verified_start=date, verified_count=count)
+                await self.init_bucket(pre)
+                await self.bucket.set_end_max(post + timedelta(seconds=self.span))
+            # or timed out
+            elif (
+                post > self.bucket.latest_timestamp
+                and count <= self.bucket.latest_count
+            ):
+                await self.init_bucket(pre)
+                await self.bucket.set_end_max(post + timedelta(seconds=self.span))
 
-        if count > self.count:
-            self.count = count
-            if self.count >= self.max:
-                self.blocked = True
+        # Ignore requests that are too old
+        if post < self.bucket.latest_timestamp:
+            return
+
+        await self.bucket.set_end_max(post + timedelta(seconds=self.span))
+
+        # Update the latest received response
+        if count > self.bucket.latest_count:
+            self.bucket.latest_count = count
+            self.bucket.latest_timestamp = post
+
+        await self.bucket.update_count(count)

@@ -50,3 +50,4 @@ CONFIG = JsonConfig.read()
 # Config keys
 
 API_KEY = CONFIG.get("API_KEY", None)
+LIMIT_SHARE = int(CONFIG.get("LIMIT_SHARE", 100)) / 100
