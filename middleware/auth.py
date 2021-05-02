@@ -51,6 +51,10 @@ class ServerCheck:
             "na1",
             "oc1",
             "tr1",
+            "ru",
+            "americas",
+            "asia",
+            "europe",
         ]
         self.logging = logging.getLogger("ServerCheck")
         self.logging.propagate = False
