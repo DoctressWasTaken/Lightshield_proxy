@@ -45,7 +45,7 @@ class Proxy:
         self.session = aiohttp.ClientSession()
         self.app.add_routes(
             [
-                web.get("/lol/{tail:.*}", self.default),
+                web.get("/{tail:.*}", self.default),
             ]
         )
         self.logging.info("Returning web server to run handler.")

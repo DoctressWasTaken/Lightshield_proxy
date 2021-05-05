@@ -72,7 +72,7 @@ class ServerCheck:
         request: Check if correct server
         response: No changes.
         """
-        server = request.rel_url.__str__().strip("http://").split(".")[0]
+        server = request.rel_url.__str__().split("http://")[1].split(".")[0]
         if server not in self.legit_server:
             self.logging.info("Illegal Server.")
             raise HTTPException
