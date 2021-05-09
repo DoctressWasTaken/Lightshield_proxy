@@ -14,4 +14,3 @@ COPY middleware/ middleware/
 COPY rate_limiting/ rate_limiting/
 
 CMD PYTHONUNBUFFERED=True poetry run gunicorn server:start_gunicorn --worker-class aiohttp.worker.GunicornWebWorker --log-level critical --bind 0.0.0.0:8000
-#CMD ["poetry", "run", "python", "-u", "run.py"]
