@@ -65,9 +65,12 @@ class LimitHandler:
         self.init_lock = asyncio.Lock()
         self.logging = logging.getLogger(f"[{server.upper()}:{method}:{span}]")
         self.logging.propagate = False
-        self.logging.setLevel(logging.INFO)
+        level = logging.INFO
+        if settings.DEBUG:
+            level = logging.DEBUG
+        self.logging.setLevel(level)
         handler = logging.StreamHandler()
-        handler.setLevel(logging.INFO)
+        handler.setLevel(level)
         handler.setFormatter(
             logging.Formatter(
                 "%(asctime)s %(name)45s previous: %(previous)15s | dead: %(dead)7s | space: %(space)8s | over: %(over)s"

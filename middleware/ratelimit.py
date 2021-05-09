@@ -3,7 +3,7 @@ import logging
 import re
 import traceback
 from datetime import datetime, timezone, timedelta
-
+import settings
 import pytz
 from aiohttp.web import middleware
 
@@ -13,7 +13,7 @@ from rate_limiting.limiter import LimitHandler
 
 class Limiter:
     regex = re.compile(
-        "https*://([a-z]{2,4}1?)\.api\.riotgames\.com/lol/([^/]*/v./[^/]*)/.*"
+        "https*://([a-z]{2,4}[12]?)\.api\.riotgames\.com/lol/([^/]*/v./[^/]*)/.*"
     )
 
     def __init__(self):
@@ -32,9 +32,12 @@ class Limiter:
         )  # Blocks all but one request until the first request returns on a route
         self.logging = logging.getLogger("Limiter")
         self.logging.propagate = False
-        self.logging.setLevel(logging.INFO)
+        level = logging.INFO
+        if settings.DEBUG:
+            level = logging.DEBUG
+        self.logging.setLevel(level)
         handler = logging.StreamHandler()
-        handler.setLevel(logging.INFO)
+        handler.setLevel(level)
         handler.setFormatter(logging.Formatter("%(asctime)s [Limiter] %(message)s"))
         self.logging.addHandler(handler)
         self.logging.info("Initiated middleware.")
@@ -95,7 +98,8 @@ class Limiter:
 
             pre_request = datetime.now(timezone.utc)
             response = await handler(request)
-
+            self.logging.debug(response.headers)
+            self.logging.debug(response.text)
             post_request = datetime.now(timezone.utc)
             if response and "Date" in response.headers:
                 naive = datetime.strptime(

@@ -31,12 +31,18 @@ class Proxy:
 
         self.logging = logging.getLogger("Proxy")
         self.logging.propagate = False
-        self.logging.setLevel(logging.INFO)
+        level = logging.INFO
+        if settings.DEBUG:
+            level = logging.DEBUG
+        self.logging.setLevel(level)
         handler = logging.StreamHandler()
-        handler.setLevel(logging.INFO)
+        handler.setLevel(level)
         handler.setFormatter(logging.Formatter("%(asctime)s %(message)s"))
         self.logging.addHandler(handler)
         self.logging.info("Initializing Proxy.")
+        if not settings.API_KEY:
+            self.logging.critical("No API Key provided.")
+            exit()
 
     async def make_app(self):
         self.app = web.Application(
@@ -63,9 +69,27 @@ class Proxy:
             if response.status == 429:
                 self.logging.critical("429")
                 self.logging.critical(returned_headers)
+            json_response = await response.json()
             res = web.Response(
-                text=json.dumps(await response.json()),
+                text=json.dumps(json_response),
                 headers=returned_headers,
                 status=response.status,
             )
         return res
+
+
+logging.getLogger().handlers = []
+
+
+async def start_gunicorn():
+    """Return webserver element to gunicorn.
+
+    Called by gunicorn directly.
+    """
+    proxy = Proxy()
+    return await proxy.make_app()
+
+
+if __name__ == "__main__":
+    p = Proxy()
+    web.run_app(p.make_app(), port=8000)

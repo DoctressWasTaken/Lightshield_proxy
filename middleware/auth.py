@@ -12,9 +12,12 @@ class Headers:
         self.required_header = []
         self.logging = logging.getLogger("HeaderManager")
         self.logging.propagate = False
-        self.logging.setLevel(logging.INFO)
+        level = logging.INFO
+        if settings.DEBUG:
+            level = logging.DEBUG
+        self.logging.setLevel(level)
         handler = logging.StreamHandler()
-        handler.setLevel(logging.INFO)
+        handler.setLevel(level)
         handler.setFormatter(
             logging.Formatter("%(asctime)s [HeaderManager] %(message)s")
         )
@@ -58,9 +61,12 @@ class ServerCheck:
         ]
         self.logging = logging.getLogger("ServerCheck")
         self.logging.propagate = False
-        self.logging.setLevel(logging.INFO)
+        level = logging.INFO
+        if settings.DEBUG:
+            level = logging.DEBUG
+        self.logging.setLevel(level)
         handler = logging.StreamHandler()
-        handler.setLevel(logging.INFO)
+        handler.setLevel(level)
         handler.setFormatter(logging.Formatter("%(asctime)s [ServerCheck] %(message)s"))
         self.logging.addHandler(handler)
         self.logging.info("Initiated middleware.")
