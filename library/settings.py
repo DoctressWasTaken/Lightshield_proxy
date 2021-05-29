@@ -1,6 +1,7 @@
-import os
 import json
 import logging
+import os
+
 
 class JsonConfig:  # pragma: no cover
     """Allow to override settings by external configuration."""
@@ -12,14 +13,16 @@ class JsonConfig:  # pragma: no cover
         self.logging.propagate = False
         level = logging.INFO
         if "DEBUG" in os.environ and (
-                os.environ["DEBUG"] or
-                os.environ["DEBUG"].lower() in ("true", "t", "yes", "y")):
+                os.environ["DEBUG"]
+                or os.environ["DEBUG"].lower() in ("true", "t", "yes", "y")
+        ):
             level = logging.DEBUG
         self.logging.setLevel(level)
         handler = logging.StreamHandler()
         handler.setLevel(level)
         handler.setFormatter(logging.Formatter("%(asctime)s [Settings] %(message)s"))
         self.logging.addHandler(handler)
+        self.logging.info("Setting config.")
         self.logging.debug("Running in debug mode.")
 
     @classmethod
@@ -64,6 +67,47 @@ CONFIG = JsonConfig.read()
 
 # Config keys
 
+API_URL = CONFIG.get('API_URL', 'https://%s.api.riotgames.com')
+
 API_KEY = CONFIG.get("API_KEY", None)
 LIMIT_SHARE = int(CONFIG.get("LIMIT_SHARE", 100)) / 100
 DEBUG = CONFIG.get_bool("DEBUG", False)
+FIRST_LIMIT = CONFIG.get("FIRST_LIMIT", "METHOD").upper()  # APP or METHOD for ordering
+if FIRST_LIMIT not in ["APP", "METHOD"]:
+    CONFIG.logging.critical(
+        "Illegal vallue supplied to FIRST_LIMIT. Can only be 'APP' or 'METHOD'."
+    )
+
+# Hardcoded
+
+ALLOWED_HEADER = [
+    "X-App-Rate-Limit-Count",
+    "X-App-Rate-Limit",
+    "X-Method-Rate-Limit-Count",
+    "X-Method-Rate-Limit",
+]
+
+ALLOWED_SERVER = [
+    "americas",
+    "asia",
+    "ap",
+    "br",
+    "br1",
+    "esports",
+    "eu",
+    "eun1",
+    "europe",
+    "euw1",
+    "jp1",
+    "kr",
+    "la1",
+    "la2",
+    "latam",
+    "na",
+    "na1",
+    "oc1",
+    "pbe1",
+    "ru",
+    "sea",
+    "tr1",
+]

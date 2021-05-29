@@ -19,6 +19,24 @@ services:
       default:
         aliases:
           - proxy
+    ports:
+      - 8888:8000
+
+  proxy_sync:
+    image: redis:6.0
+    command: ["redis-server", "--appendonly", "yes" ]
+    networks:
+      default:
+        aliases:
+          - proxy_sync
+    restart: always
+    volumes:
+      - ./lua_scripts:/lua_scripts/
+    environment:
+      - "LOG_LEVEL=debug"
+    ports:
+      - 6379:6379
+
 
 networks:
   default:
