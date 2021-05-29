@@ -1,8 +1,11 @@
 [tool.poetry]
 name = "Lightshield"
-version = "0.1.0"
-description = ""
-authors = ["Robin (Nurse) <<>>"]
+version = "0.1.4b"
+description = "Library part of the Lightshield tool."
+license = 'Apache-2.0'
+repository = 'https://github.com/LightshieldDotDev/Lightshield'
+authors = ["Doctress <lightshielddev@gmail.com>"]
+readme = 'README.md'
 
 [tool.poetry.dependencies]
 python = "^3.9"

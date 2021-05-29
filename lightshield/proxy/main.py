@@ -1,18 +1,19 @@
-import asyncio
 import re
+
 import aioredis
-from endpoint import Endpoint
+
+from .endpoint import Endpoint
 
 pattern = 'https://([\w\d]*)\.api\.riotgames\.com(/[^/]*/[^/]*/[v\d]*/[^/]+).*'
 compiled = re.compile(pattern)
 
 
-class LightshieldProxy:
+class Proxy:
     """Central proxy element to be imported."""
 
     def __init__(self):
         # Setup Logging
-        #
+
         self.redis = None
         self.endpoints = {}
 
@@ -20,7 +21,6 @@ class LightshieldProxy:
         self.redis = await aioredis.create_redis_pool(
             (host, port), encoding="utf-8", maxsize=20
         )
-
 
     async def request(self, url, session):
         """Request an url."""
@@ -41,4 +41,3 @@ class LightshieldProxy:
         except KeyError:
             self.endpoints[limit_key] = Endpoint(server, zone, self.redis)
             return self.endpoints[limit_key]
-

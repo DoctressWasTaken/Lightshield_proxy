@@ -1,4 +1,4 @@
-from main import LightshieldProxy
+from lightshield.proxy import Proxy
 import asyncio
 import settings
 import aiohttp
@@ -13,7 +13,7 @@ async def fetch(endpoint, session):
 
 async def run():
     url = 'https://euw1.api.riotgames.com/lol/league-exp/v4/entries/RANKED_SOLO_5x5/CHALLENGER/I'
-    proxy = LightshieldProxy()
+    proxy = Proxy()
     await proxy.init(host='localhost')
     endpoint = await proxy.get_endpoint(url)
     headers = {'X-Riot-Token': settings.API_KEY}

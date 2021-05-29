@@ -1,9 +1,6 @@
 from datetime import datetime
-
-from aiohttp.web_exceptions import HTTPServerError, HTTPClientError, HTTPNotFound
-
-import settings
-from exceptions import LimitBlocked
+from lightshield.exceptions import LimitBlocked, RatelimitException, NotFoundException, Non200Exception, NoMessageException
+import logging
 
 
 class Endpoint:
@@ -16,9 +13,9 @@ class Endpoint:
         self.zone_key = '%s:%s' % (server, zone)  # Used to identify existence of zone wide limits
         self.server_limits = None
         self.zone_limits = None
-        self.headers = {'X-Riot-Token': settings.API_KEY}
+        self.logging = logging.getLogger('Proxy')
 
-    async def permit(self, start_point):
+    async def permit(self, start_point) -> None:
         """Handle pre-flight ratelimiting unlock.
 
         Data passed to the script:
@@ -72,10 +69,10 @@ class Endpoint:
         # print("Sending keys: %s" % keys)
         # print("Sending argv: %s" % argv)
         if (wait := await self.redis.evalsha(script_sha1, keys, argv)) > 0:
-            print("Waiting for %s ms." % wait, end="\r")
+            self.logging.debug("Waiting for %s ms." % wait, end="\r")
             raise LimitBlocked(retry_after=wait)
 
-    async def align(self, start_point, headers, status):
+    async def align(self, start_point, headers, status) -> None:
         """Align limits with response details.
 
         Data passed to the script:
@@ -131,26 +128,25 @@ class Endpoint:
         # print(argv)
         await self.redis.evalsha(script_sha1, keys, argv)
 
-    async def request(self, url, session):
+    async def request(self, url, session) -> dict:
         """Process request."""
         start_point = int(datetime.now().timestamp() * 1000)
         await self.permit(start_point)
-        #print(url)
+
         async with session.get(url) as response:
             data = await response.json()
             headers = response.headers
             status = response.status
             if status != 200:
-                print(status)
-                print(headers)
-                exit()
-        try:
-            if status >= 500:
-                raise HTTPServerError
-            elif status == 404:
-                raise HTTPNotFound
-            elif status >= 400:
-                raise HTTPClientError
-        finally:
-            # print("Aligning limits")
-            return await self.align(start_point, headers, status)
+                self.logging.debug(status)
+                self.logging.debug(headers)
+
+        await self.align(start_point, headers, status)
+        if status == 200:
+            return data
+        elif status == 404:
+            raise NotFoundException
+        elif status == 429:
+            raise RatelimitException
+        else:
+            raise Non200Exception
