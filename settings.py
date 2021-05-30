@@ -10,18 +10,6 @@ class JsonConfig:  # pragma: no cover
         """Initialize config with dictionary."""
         self._config = config
         self.logging = logging.getLogger("Settings")
-        self.logging.propagate = False
-        level = logging.INFO
-        if "DEBUG" in os.environ and (
-                os.environ["DEBUG"]
-                or os.environ["DEBUG"].lower() in ("true", "t", "yes", "y")
-        ):
-            level = logging.DEBUG
-        self.logging.setLevel(level)
-        handler = logging.StreamHandler()
-        handler.setLevel(level)
-        handler.setFormatter(logging.Formatter("%(asctime)s [Settings] %(message)s"))
-        self.logging.addHandler(handler)
         self.logging.info("Setting config.")
         self.logging.debug("Running in debug mode.")
 
