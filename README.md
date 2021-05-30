@@ -3,7 +3,9 @@
 Tools and Code-Sections of the Lightshield Framework that were better fit to be provided through dependency
 rather then included in the main project.
 
-
+#### What currently doesn't work:
+- The keys used to save data in Redis are not linked to the API key, as such multiple keys have to use
+multiple Redis servers.
 
 ### Ratelimiter (WIP)
 
@@ -33,4 +35,14 @@ async with aiohttp.ClientSession(headers={'X-Riot-Token': ''}) as session:
     zone = await p.get_endpoint('https://euw1.api.riotgames.com/lol/league-exp/v4/entries/')
     for page in range(1, 10):
         zone.request('https://euw1.api.riotgames.com/lol/league-exp/v4/entries/RANKED_SOLO_5x5/SILVER/I?page=%s' % page, session)
+```
+
+### Settings (WIP)
+The settings file contains a number of variables that are used across the project.
+Variables can be set through:  
+`ENV > config.json > default`
+```python
+from lightshield import settings
+
+headers = {'X-Riot-Token': settings.API_KEY}
 ```

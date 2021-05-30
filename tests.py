@@ -1,20 +1,26 @@
-from lightshield.proxy import Proxy
 import asyncio
-import settings
+import logging
+
 import aiohttp
+
+import settings
+from lightshield.proxy import Proxy
+
+logging.basicConfig(level=logging.DEBUG, format='%(levelname)8s %(name)s %(message)s')
 
 
 async def fetch(endpoint, session):
     url = 'https://euw1.api.riotgames.com/lol/league-exp/v4/entries/RANKED_SOLO_5x5/CHALLENGER/I'
     try:
         await endpoint.request(url, session)
-    except Exception as err:
-        print(err)
+    except:
+        pass
+
 
 async def run():
     url = 'https://euw1.api.riotgames.com/lol/league-exp/v4/entries/RANKED_SOLO_5x5/CHALLENGER/I'
     proxy = Proxy()
-    await proxy.init(host='localhost')
+    await proxy.init(host='localhost', port=6380)
     endpoint = await proxy.get_endpoint(url)
     headers = {'X-Riot-Token': settings.API_KEY}
     async with aiohttp.ClientSession(headers=headers) as session:
@@ -25,7 +31,6 @@ async def run():
             await asyncio.sleep(1)
 
     await asyncio.sleep(1)
-    print("Done?")
+
 
 asyncio.run(run())
-

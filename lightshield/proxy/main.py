@@ -1,3 +1,5 @@
+import logging
+import os
 import re
 
 import aioredis
@@ -16,6 +18,7 @@ class Proxy:
 
         self.redis = None
         self.endpoints = {}
+        self.logging = logging.getLogger('Proxy')
 
     async def init(self, host='localhost', port=6379):
         self.redis = await aioredis.create_redis_pool(

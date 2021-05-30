@@ -1,7 +1,7 @@
 from datetime import datetime
 from lightshield.exceptions import LimitBlocked, RatelimitException, NotFoundException, Non200Exception, NoMessageException
 import logging
-
+import os
 
 class Endpoint:
 
@@ -69,7 +69,7 @@ class Endpoint:
         # print("Sending keys: %s" % keys)
         # print("Sending argv: %s" % argv)
         if (wait := await self.redis.evalsha(script_sha1, keys, argv)) > 0:
-            self.logging.debug("Waiting for %s ms." % wait, end="\r")
+            self.logging.debug("Waiting for %s ms.", wait)
             raise LimitBlocked(retry_after=wait)
 
     async def align(self, start_point, headers, status) -> None:
